@@ -1,6 +1,6 @@
 package responses
 
-type Response struct {
-	Result interface{} `json:"result"`
-	Error  interface{} `json:"response"`
+type ResponseError struct {
+	ApiError interface{} `json:"apiError"`
+	Error    interface{} `json:"error"`
 }

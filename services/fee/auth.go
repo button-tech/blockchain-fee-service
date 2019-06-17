@@ -9,8 +9,9 @@ import (
 )
 
 type apiResponse struct {
-	Result     interface{} `json:"result"`
-	StatusCode int         `json:"statusCode"`
+	Result   interface{} `json:"result"`
+	ApiError interface{} `json:"apiError"`
+	Error    error       `json:"error"`
 }
 
 func apiCall(method, apiUrl, path string, data interface{}) apiResponse {
@@ -26,8 +27,7 @@ func apiCall(method, apiUrl, path string, data interface{}) apiResponse {
 		data, err = serialize(data)
 		if err != nil {
 			return apiResponse{
-				Result:     err,
-				StatusCode: http.StatusInternalServerError,
+				Error: err,
 			}
 		}
 	}
@@ -41,37 +41,47 @@ func apiCall(method, apiUrl, path string, data interface{}) apiResponse {
 		response, respErr = req.Delete(uri, authHeader)
 	}
 
-	statusCode := response.Response().StatusCode
 	if respErr != nil {
 		return apiResponse{
-			Result:     respErr,
-			StatusCode: statusCode,
+			Error: respErr,
+		}
+	}
+
+	if statusCode := response.Response().StatusCode; statusCode == http.StatusOK || statusCode == http.StatusCreated {
+		return apiResponse{
+			Result: response,
 		}
 	}
 
 	return apiResponse{
-		Result:     response,
-		StatusCode: statusCode,
+		ApiError: response,
 	}
 }
 
-func (res *apiResponse) response(v interface{}) responses.Response {
-	if res.StatusCode == http.StatusOK || res.StatusCode == http.StatusCreated {
-		if err := res.Result.(*req.Resp).ToJSON(&v); err != nil {
-			log.Println(err.Error())
-			return responses.Response{
-				Error: err.Error(),
-			}
-		}
-		return responses.Response{
-			Result: v,
-		}
-	} else {
-		return responses.Response{
-			Error: v,
+func (res *apiResponse) response(v interface{}) responses.ResponseError {
+	if res.ApiError != nil {
+		//var e interface{}
+		//if err := res.ApiError.(*req.Resp).ToJSON(&e); err != nil {
+		//	return responses.ResponseError{
+		//		Error: err,
+		//	}
+		//}
+		return responses.ResponseError{
+			ApiError: res.ApiError.(*req.Resp).String(),
 		}
 	}
-
+	if res.Error != nil {
+		return responses.ResponseError{
+			Error: res.Error,
+		}
+	}
+	if err := res.Result.(*req.Resp).ToJSON(&v); err != nil {
+		log.Println(err.Error())
+		return responses.ResponseError{
+			Error: err,
+		}
+	}
+	return responses.ResponseError{}
 }
 
 func serialize(data interface{}) ([]byte, error) {

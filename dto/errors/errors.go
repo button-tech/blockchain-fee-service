@@ -3,8 +3,8 @@ package errors
 import e "errors"
 
 type ApiError struct {
-	ExceptionId int    `json:"exceptionId"`
-	Message     string `json:"message"`
+	ExceptionId int         `json:"exceptionId"`
+	Error       interface{} `json:"error"`
 }
 
 type BadRequest struct {
