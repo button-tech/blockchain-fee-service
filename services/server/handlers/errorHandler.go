@@ -25,6 +25,15 @@ func handleError(e interface{}) (bool, int, errors.ApiError) {
 			}
 		}
 		return false, 0, errors.ApiError{}
+	case errors.BadRequest:
+		if resp.Error != nil {
+			log.Println(resp.Error)
+			return true, http.StatusBadRequest, errors.ApiError{
+				ExceptionId: http.StatusBadRequest,
+				Error:       "Bad Request",
+			}
+		}
+		return false, 0, errors.ApiError{}
 	case error:
 		log.Println(resp)
 		return true, http.StatusInternalServerError, errors.ApiError{

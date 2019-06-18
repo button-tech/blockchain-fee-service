@@ -1,4 +1,4 @@
-package fee
+package api
 
 import (
 	"dev.azure.com/fee-service/dto/fee/responses"
