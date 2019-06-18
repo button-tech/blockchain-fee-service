@@ -10,6 +10,29 @@ import (
 	"strconv"
 )
 
+type utxoBlockchain struct {
+	AllUtxos             []responses.Utxo
+	TotalBalance         int
+	UsefulBalance        int
+	SatoshiAmount        int
+	CalcFee              func(int, int, int) int
+	MinFeePerByte        int
+	FeePerByte           int
+	MinFee               int
+	Fee                  int
+	MinInputs            int
+	Input                int
+	Output               int
+	LastIterationBalance int
+	UsefulUtxos          []responses.Utxo
+	UselessUtxos         []responses.Utxo
+	DustUtxos            []responses.Utxo
+	MaxAmount            int
+	MaxUsefulAmount      int
+	IsBadFee             bool
+	IsEnough             bool
+}
+
 func calcUtxoFee(utxos []responses.Utxo, amount float64, receiversCount, MinFeePerByte int, calcFee func(int, int, int) int) (dto.GetFeeResponse, responses.ResponseError) {
 	totalBalance := calcTotalBalance(utxos)
 	if totalBalance == 0 {
