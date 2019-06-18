@@ -10,3 +10,10 @@ func GetBitcoinFee() (responses.BitcoinFeeResponse, responses.ResponseError) {
 	errors := call.response(&responseToClient)
 	return responseToClient, errors
 }
+
+func GetLitecoinFee() (responses.LitecoinFeeResponse, responses.ResponseError) {
+	call := apiCall("GET", "https://api.blockcypher.com", "/v1/ltc/main", nil)
+	var responseToClient responses.LitecoinFeeResponse
+	errors := call.response(&responseToClient)
+	return responseToClient, errors
+}

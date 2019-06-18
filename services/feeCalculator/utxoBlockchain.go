@@ -3,7 +3,6 @@ package feeCalculator
 import (
 	"dev.azure.com/fee-service/dto"
 	"dev.azure.com/fee-service/dto/fee/responses"
-	"dev.azure.com/fee-service/services/api"
 	"math"
 	"math/big"
 	"sort"
@@ -33,15 +32,10 @@ type utxoBlockchain struct {
 	IsEnough             bool
 }
 
-func calcUtxoFee(utxos []responses.Utxo, amount float64, receiversCount, MinFeePerByte int, calcFee func(int, int, int) int) (dto.GetFeeResponse, responses.ResponseError) {
+func calcUtxoFee(utxos []responses.Utxo, amount float64, receiversCount int, feeCalculator feeCalculator) (dto.GetFeeResponse, responses.ResponseError) {
 	totalBalance := calcTotalBalance(utxos)
 	if totalBalance == 0 {
 		return dto.GetFeeResponse{}, responses.ResponseError{}
-	}
-
-	feePerByte, apiErr := api.GetBitcoinFee()
-	if apiErr.Error != nil || apiErr.ApiError != nil {
-		return dto.GetFeeResponse{}, apiErr
 	}
 
 	satoshiAmount, err := floatAmountToSatoshi(amount)
@@ -55,9 +49,9 @@ func calcUtxoFee(utxos []responses.Utxo, amount float64, receiversCount, MinFeeP
 		AllUtxos:      utxos,
 		TotalBalance:  totalBalance,
 		SatoshiAmount: satoshiAmount,
-		CalcFee:       calcBitcoinFee,
-		FeePerByte:    feePerByte.HalfHourFee,
-		MinFeePerByte: MinFeePerByte,
+		CalcFee:       feeCalculator.CalcFee,
+		FeePerByte:    feeCalculator.FeePerByte,
+		MinFeePerByte: feeCalculator.MinFeePerByte,
 		Output:        receiversCount,
 	}
 	ux.setMinimalRequirements()
@@ -68,11 +62,11 @@ func calcUtxoFee(utxos []responses.Utxo, amount float64, receiversCount, MinFeeP
 		ux.Input++
 		iterationBalance += utxos[i].Satoshis
 		if iterationBalance > satoshiAmount {
-			feeWithoutReturningOutput := calcFee(ux.Input, ux.Output, feePerByte.HalfHourFee)
-			fee := calcFee(ux.Input, ux.Output+1, feePerByte.HalfHourFee)
+			feeWithoutReturningOutput := ux.CalcFee(ux.Input, ux.Output, feeCalculator.FeePerByte)
+			fee := ux.CalcFee(ux.Input, ux.Output+1, feeCalculator.FeePerByte)
 			currentValueOneOutput := feeWithoutReturningOutput + satoshiAmount
 			currentValueTwoOutputs := fee + satoshiAmount
-			isEnoughForMinFee := iterationBalance-satoshiAmount >= calcFee(i+1, ux.Output, ux.MinFeePerByte)
+			isEnoughForMinFee := iterationBalance-satoshiAmount >= ux.CalcFee(i+1, ux.Output, ux.MinFeePerByte)
 			con0 := iterationBalance < currentValueOneOutput
 			con1 := iterationBalance == currentValueOneOutput
 			con2 := iterationBalance > currentValueOneOutput && iterationBalance < currentValueTwoOutputs
@@ -189,10 +183,6 @@ func calcTotalBalance(utxos []responses.Utxo) int {
 		totalBalance += utxo.Satoshis
 	}
 	return totalBalance
-}
-
-func calcBitcoinFee(inputCount, outputCount, feePerByte int) int {
-	return (inputCount*148 + outputCount*34 + 10) * feePerByte
 }
 
 func floatAmountToSatoshi(amount float64) (int, error) {

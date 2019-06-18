@@ -29,3 +29,47 @@ func GetBitcoinFee(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, res)
 }
+
+func GetLitecoinFee(c *gin.Context) {
+	var body dto.GetFeeRequest
+	body.ReceiversCount = 1
+	if ok, statusCode, message := handleError(errors.BadRequest{
+		Error:   c.ShouldBindJSON(&body),
+		Message: errors.BadRequestMessage,
+	}); ok != false {
+		c.JSON(statusCode, message)
+		return
+	}
+	res, apiErr, err := feeCalculator.GetLitecoinFee(body.FromAddress, body.Amount, body.ReceiversCount)
+	if ok, statusCode, message := handleError(err); ok != false {
+		c.JSON(statusCode, message)
+		return
+	}
+	if ok, statusCode, message := handleError(apiErr); ok != false {
+		c.JSON(statusCode, message)
+		return
+	}
+	c.JSON(http.StatusOK, res)
+}
+
+func GetBitcoinCashFee(c *gin.Context) {
+	var body dto.GetFeeRequest
+	body.ReceiversCount = 1
+	if ok, statusCode, message := handleError(errors.BadRequest{
+		Error:   c.ShouldBindJSON(&body),
+		Message: errors.BadRequestMessage,
+	}); ok != false {
+		c.JSON(statusCode, message)
+		return
+	}
+	res, apiErr, err := feeCalculator.GetBitcoinCashFee(body.FromAddress, body.Amount, body.ReceiversCount)
+	if ok, statusCode, message := handleError(err); ok != false {
+		c.JSON(statusCode, message)
+		return
+	}
+	if ok, statusCode, message := handleError(apiErr); ok != false {
+		c.JSON(statusCode, message)
+		return
+	}
+	c.JSON(http.StatusOK, res)
+}

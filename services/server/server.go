@@ -22,6 +22,8 @@ func RunServer(R *gin.Engine) error {
 			fee := api.Group("/fee")
 			{
 				fee.POST("/bitcoin", handlers.GetBitcoinFee)
+				fee.POST("/litecoin", handlers.GetLitecoinFee)
+				fee.POST("/bitcoinCash", handlers.GetBitcoinCashFee)
 			}
 		}
 	}
