@@ -103,6 +103,25 @@ func GetEthereumClassicFee(address string, amount string) (dto.GetEthFeeResponse
 	return fr, responses.ResponseError{}, nil
 }
 
+func GetWavesFee(address string, amount string) (dto.GetWavesFeeResponse, responses.ResponseError, error) {
+	balance, apiErr := api.GetWavesBalance(address)
+	if apiErr.Error != nil || apiErr.ApiError != nil {
+		return dto.GetWavesFeeResponse{}, apiErr, nil
+	}
+	maxAmount := balance.Balance - 300000
+	isEnough := true
+	if stringAmountToSatoshi(amount) > maxAmount {
+		isEnough = false
+	}
+	return dto.GetWavesFeeResponse{
+		Balance:                 balance.Balance,
+		Fee:                     300000,
+		MaxAmountWithOptimalFee: maxAmount,
+		IsBadFee:                false,
+		IsEnough:                isEnough,
+	}, responses.ResponseError{}, nil
+}
+
 func calcBitcoinFee(inputCount, outputCount, feePerByte int) int {
 	return (inputCount*148 + outputCount*34 + 10) * feePerByte
 }

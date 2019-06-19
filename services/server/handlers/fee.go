@@ -115,3 +115,24 @@ func GetEthereumClassicFee(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, res)
 }
+
+func GetWavesFee(c *gin.Context) {
+	var body dto.GetFeeRequest
+	if ok, statusCode, message := handleError(errors.BadRequest{
+		Error:   c.ShouldBindJSON(&body),
+		Message: errors.BadRequestMessage,
+	}); ok != false {
+		c.JSON(statusCode, message)
+		return
+	}
+	res, apiErr, err := feeCalculator.GetWavesFee(body.FromAddress, body.Amount)
+	if ok, statusCode, message := handleError(err); ok != false {
+		c.JSON(statusCode, message)
+		return
+	}
+	if ok, statusCode, message := handleError(apiErr); ok != false {
+		c.JSON(statusCode, message)
+		return
+	}
+	c.JSON(http.StatusOK, res)
+}
