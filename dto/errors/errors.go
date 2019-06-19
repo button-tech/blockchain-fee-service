@@ -25,3 +25,5 @@ type NotFound struct {
 func CustomError(message string) error {
 	return e.New(message)
 }
+
+const BadRequestMessage = "Bad Request"

@@ -2,8 +2,8 @@ package handlers
 
 import (
 	"dev.azure.com/fee-service/dto"
+	"dev.azure.com/fee-service/dto/errors"
 	"dev.azure.com/fee-service/services/feeCalculator"
-	"dev.azure.com/moon-pay/dto/errors"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
