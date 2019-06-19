@@ -7,7 +7,9 @@ import (
 )
 
 func InitServer() *gin.Engine {
-	return gin.New()
+	g := gin.New()
+	gin.SetMode(gin.ReleaseMode)
+	return g
 }
 
 func RunServer(R *gin.Engine) error {
