@@ -17,19 +17,16 @@ func RunServer(R *gin.Engine) error {
 	R.Use(cors.Default())
 	{
 
-		api := R.Group("/api/services")
+		api := R.Group("/fee")
 		{
-			fee := api.Group("/fee")
-			{
-				fee.POST("/bitcoin", handlers.GetBitcoinFee)
-				fee.POST("/litecoin", handlers.GetLitecoinFee)
-				fee.POST("/bitcoinCash", handlers.GetBitcoinCashFee)
-				fee.POST("/ethereum", handlers.GetEthereumFee)
-				fee.POST("/ethereumClassic", handlers.GetEthereumClassicFee)
-				fee.POST("/token", handlers.GetTokenFee)
-				fee.POST("/waves", handlers.GetWavesFee)
-				fee.POST("/stellar", handlers.GetStellarFee)
-			}
+			api.POST("/bitcoin", handlers.GetBitcoinFee)
+			api.POST("/litecoin", handlers.GetLitecoinFee)
+			api.POST("/bitcoinCash", handlers.GetBitcoinCashFee)
+			api.POST("/ethereum", handlers.GetEthereumFee)
+			api.POST("/ethereumClassic", handlers.GetEthereumClassicFee)
+			api.POST("/token", handlers.GetTokenFee)
+			api.POST("/waves", handlers.GetWavesFee)
+			api.POST("/stellar", handlers.GetStellarFee)
 		}
 	}
 
