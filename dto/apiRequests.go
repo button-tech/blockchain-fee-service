@@ -7,7 +7,7 @@ type GetFeeRequest struct {
 }
 
 type GetTokenFeeRequest struct {
-	Address      string `json:"address"`
+	FromAddress      string `json:"fromAddress"`
 	Amount       string `json:"amount"`
 	TokenAddress string `json:"tokenAddress"`
 }

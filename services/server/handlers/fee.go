@@ -104,7 +104,7 @@ func GetTokenFee(c *gin.Context) {
 		c.JSON(statusCode, message)
 		return
 	}
-	res, apiErr, err := feeCalculator.GetTokenFee(body.Address, body.TokenAddress, body.Amount)
+	res, apiErr, err := feeCalculator.GetTokenFee(body.FromAddress, body.TokenAddress, body.Amount)
 	if ok, statusCode, message := handleError(err); ok != false {
 		c.JSON(statusCode, message)
 		return
