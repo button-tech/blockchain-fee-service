@@ -2,9 +2,9 @@ package feeCalculator
 
 import (
 	"dev.azure.com/fee-service/dto"
+	"dev.azure.com/fee-service/dto/fee/requests"
 	"dev.azure.com/fee-service/dto/fee/responses"
 	"dev.azure.com/fee-service/services/api"
-	"strconv"
 )
 
 type feeCalculator struct {
@@ -78,8 +78,7 @@ func GetEthereumFee(address string, amount string) (dto.GetEthFeeResponse, respo
 	if apiErr.Error != nil || apiErr.ApiError != nil {
 		return dto.GetEthFeeResponse{}, apiErr, nil
 	}
-	bal, err := strconv.Atoi(balance.Balance)
-	fr, err := CalculateEthBasedFee(bal, fee.GasPrice, 21000, amount)
+	fr, err := CalculateEthBasedFee(balance.Balance, fee.GasPrice, 21000, amount)
 	if err != nil {
 		return dto.GetEthFeeResponse{}, responses.ResponseError{}, err
 	}
@@ -95,10 +94,37 @@ func GetEthereumClassicFee(address string, amount string) (dto.GetEthFeeResponse
 	if apiErr.Error != nil || apiErr.ApiError != nil {
 		return dto.GetEthFeeResponse{}, apiErr, nil
 	}
-	bal, err := strconv.Atoi(balance.Balance)
-	fr, err := CalculateEthBasedFee(bal, fee.GasPrice, 21000, amount)
+	fr, err := CalculateEthBasedFee(balance.Balance, fee.GasPrice, 21000, amount)
 	if err != nil {
 		return dto.GetEthFeeResponse{}, responses.ResponseError{}, err
+	}
+	return fr, responses.ResponseError{}, nil
+}
+
+func GetTokenFee(address, tokenAddress, amount string) (dto.GetTokenFeeResponse, responses.ResponseError, error) {
+	gasLimit, apiErr := api.GetTokenGasLimit(requests.TokenGasLimitRequest{
+		TokenAddress: tokenAddress,
+		ToAddress:    address,
+		Amount:       amount,
+	})
+	if apiErr.Error != nil || apiErr.ApiError != nil {
+		return dto.GetTokenFeeResponse{}, apiErr, nil
+	}
+	fee, apiErr := api.GetEthereumFee()
+	if apiErr.Error != nil || apiErr.ApiError != nil {
+		return dto.GetTokenFeeResponse{}, apiErr, nil
+	}
+	balance, apiErr := api.GetEthereumBalance(address)
+	if apiErr.Error != nil || apiErr.ApiError != nil {
+		return dto.GetTokenFeeResponse{}, apiErr, nil
+	}
+	tokenBalance, apiErr := api.GetTokenBalance(address, tokenAddress)
+	if apiErr.Error != nil || apiErr.ApiError != nil {
+		return dto.GetTokenFeeResponse{}, apiErr, nil
+	}
+	fr, err := CalculateTokenFee(balance.Balance, tokenBalance.Balance, fee.GasPrice, gasLimit.GasLimit, amount)
+	if err != nil {
+		return dto.GetTokenFeeResponse{}, responses.ResponseError{}, err
 	}
 	return fr, responses.ResponseError{}, nil
 }

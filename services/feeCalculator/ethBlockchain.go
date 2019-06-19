@@ -2,19 +2,23 @@ package feeCalculator
 
 import (
 	"dev.azure.com/fee-service/dto"
+	"dev.azure.com/fee-service/dto/errors"
 	"math"
 	"math/big"
 )
 
-func CalculateEthBasedFee(balance, gasPrice, gas int, amount string) (dto.GetEthFeeResponse, error) {
+func CalculateEthBasedFee(balance string, gasPrice, gas int, amount string) (dto.GetEthFeeResponse, error) {
 	wei := stringAmountToWei(amount)
-
-	bigBalance := IntToBigInt(balance)
+	bal, ok := StringToBigInt(balance)
+	if ok != true {
+		return dto.GetEthFeeResponse{}, errors.CustomError("failed to parse String to big.Int")
+	}
+	bigBalance := bal
 	if bigBalance.Cmp(wei) < 0 {
 		return dto.GetEthFeeResponse{}, nil
 	}
 	fr := dto.GetEthFeeResponse{
-		Balance: balance,
+		Balance: int(bal.Uint64()),
 		Gas:     gas,
 	}
 
@@ -52,6 +56,37 @@ func CalculateEthBasedFee(balance, gasPrice, gas int, amount string) (dto.GetEth
 	return fr, nil
 }
 
+func CalculateTokenFee(ethBalance, tokenBalance string, gasPrice, gas int, amount string) (dto.GetTokenFeeResponse, error) {
+	ethBal, ok := StringToBigInt(ethBalance)
+	if ok != true {
+		return dto.GetTokenFeeResponse{}, errors.CustomError("failed to parse String to big.Int")
+	}
+	tokenBal, ok := StringToBigInt(tokenBalance)
+	if ok != true {
+		return dto.GetTokenFeeResponse{}, errors.CustomError("failed to parse String to big.Int")
+	}
+	tokenVal := stringAmountToWei(amount)
+	eth, err := CalculateEthBasedFee(ethBalance, gasPrice, 21000, "0")
+	if err != nil {
+		return dto.GetTokenFeeResponse{}, err
+	}
+	f := dto.GetTokenFeeResponse{
+		Balance:                 int(ethBal.Int64()),
+		TokenBalance:            int(tokenBal.Int64()),
+		IsBadFee:                eth.IsBadFee,
+		IsEnough:                eth.IsEnough,
+		MaxAmountWithOptimalFee: int(tokenBal.Int64()),
+		GasPrice:                gasPrice,
+		Gas:                     gas,
+		Fee:                     eth.Fee,
+	}
+	if tokenBal.Cmp(tokenVal) < 0 {
+		f.IsEnough = false
+	}
+	return f, nil
+
+}
+
 func stringAmountToWei(amount string) *big.Int {
 	bigA, _ := new(big.Float).SetString(amount)
 	multiplier := new(big.Float).SetFloat64(math.Pow(10, 18))
@@ -62,6 +97,10 @@ func stringAmountToWei(amount string) *big.Int {
 
 func IntToBigInt(i int) *big.Int {
 	return new(big.Int).SetInt64(int64(i))
+}
+
+func StringToBigInt(s string) (*big.Int, bool) {
+	return new(big.Int).SetString(s, 10)
 }
 
 func Add(a, b *big.Int) *big.Int {

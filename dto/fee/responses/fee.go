@@ -28,3 +28,7 @@ type LitecoinFeeResponse struct {
 type EthereumFeeResponse struct {
 	GasPrice int `json:"gasPrice"`
 }
+
+type TokenFeeResponse struct {
+	GasLimit int `json:"gasLimit"`
+}

@@ -18,6 +18,13 @@ func GetEthereumBalance(address string) (responses.CurrencyBalanceResponse, resp
 	return responseToClient, errors
 }
 
+func GetTokenBalance(address, tokenAddress string) (responses.CurrencyBalanceResponse, responses.ResponseError) {
+	call := apiCall("GET", "https://node.buttonwallet.com", "/eth/tokenBalance/"+tokenAddress+"/"+address, nil)
+	var responseToClient responses.CurrencyBalanceResponse
+	errors := call.response(&responseToClient)
+	return responseToClient, errors
+}
+
 func GetEthereumClassicBalance(address string) (responses.CurrencyBalanceResponse, responses.ResponseError) {
 	call := apiCall("GET", "https://node.buttonwallet.com", "/etc/balance/"+address, nil)
 	var responseToClient responses.CurrencyBalanceResponse
