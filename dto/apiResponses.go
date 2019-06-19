@@ -22,7 +22,7 @@ type GetEthFeeResponse struct {
 	IsBadFee                bool `json:"isBadFee"`
 }
 
-type GetWavesFeeResponse struct {
+type GetWavesAndStellarFeeResponse struct {
 	Fee                     int  `json:"fee"`
 	Balance                 int  `json:"balance"`
 	MaxAmountWithOptimalFee int  `json:"maxAmount"`

@@ -103,23 +103,35 @@ func GetEthereumClassicFee(address string, amount string) (dto.GetEthFeeResponse
 	return fr, responses.ResponseError{}, nil
 }
 
-func GetWavesFee(address string, amount string) (dto.GetWavesFeeResponse, responses.ResponseError, error) {
+func GetWavesFee(address string, amount string) (dto.GetWavesAndStellarFeeResponse, responses.ResponseError, error) {
 	balance, apiErr := api.GetWavesBalance(address)
 	if apiErr.Error != nil || apiErr.ApiError != nil {
-		return dto.GetWavesFeeResponse{}, apiErr, nil
+		return dto.GetWavesAndStellarFeeResponse{}, apiErr, nil
 	}
 	maxAmount := balance.Balance - 300000
 	isEnough := true
 	if stringAmountToSatoshi(amount) > maxAmount {
 		isEnough = false
+		if maxAmount < 0 {
+			maxAmount = 0
+		}
 	}
-	return dto.GetWavesFeeResponse{
+	return dto.GetWavesAndStellarFeeResponse{
 		Balance:                 balance.Balance,
 		Fee:                     300000,
 		MaxAmountWithOptimalFee: maxAmount,
 		IsBadFee:                false,
 		IsEnough:                isEnough,
 	}, responses.ResponseError{}, nil
+}
+
+func GetStellarFee(address string, amount string) (dto.GetWavesAndStellarFeeResponse, responses.ResponseError, error) {
+	balance, apiErr := api.GetStellarBalance(address)
+	if apiErr.Error != nil || apiErr.ApiError != nil {
+		return dto.GetWavesAndStellarFeeResponse{}, apiErr, nil
+	}
+	fr := CalcStellarFee(balance.Balance, amount, 100)
+	return fr, responses.ResponseError{}, nil
 }
 
 func calcBitcoinFee(inputCount, outputCount, feePerByte int) int {

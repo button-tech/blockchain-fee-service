@@ -31,3 +31,10 @@ func GetWavesBalance(address string) (responses.WavesBalanceResponse, responses.
 	errors := call.response(&responseToClient)
 	return responseToClient, errors
 }
+
+func GetStellarBalance(address string) (responses.CurrencyBalanceResponse, responses.ResponseError) {
+	call := apiCall("GET", "https://node.buttonwallet.com", "/xlm/balance/"+address, nil)
+	var responseToClient responses.CurrencyBalanceResponse
+	errors := call.response(&responseToClient)
+	return responseToClient, errors
+}

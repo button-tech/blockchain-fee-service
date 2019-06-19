@@ -27,6 +27,7 @@ func RunServer(R *gin.Engine) error {
 				fee.POST("/ethereum", handlers.GetEthereumFee)
 				fee.POST("/ethereumClassic", handlers.GetEthereumClassicFee)
 				fee.POST("/waves", handlers.GetWavesFee)
+				fee.POST("/stellar", handlers.GetStellarFee)
 			}
 		}
 	}
