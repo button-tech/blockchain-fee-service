@@ -6,7 +6,6 @@ import (
 	"math"
 	"math/big"
 	"sort"
-	"strconv"
 )
 
 type utxoBlockchain struct {
@@ -32,16 +31,13 @@ type utxoBlockchain struct {
 	IsEnough             bool
 }
 
-func calcUtxoFee(utxos []responses.Utxo, amount float64, receiversCount int, feeCalculator feeCalculator) (dto.GetFeeResponse, responses.ResponseError) {
+func calcUtxoFee(utxos []responses.Utxo, amount string, receiversCount int, feeCalculator feeCalculator) (dto.GetFeeResponse, responses.ResponseError) {
 	totalBalance := calcTotalBalance(utxos)
 	if totalBalance == 0 {
 		return dto.GetFeeResponse{}, responses.ResponseError{}
 	}
 
-	satoshiAmount, err := floatAmountToSatoshi(amount)
-	if err != nil {
-		return dto.GetFeeResponse{}, responses.ResponseError{Error: err}
-	}
+	satoshiAmount := stringAmountToSatoshi(amount)
 
 	sortUtxo(utxos)
 
@@ -185,12 +181,12 @@ func calcTotalBalance(utxos []responses.Utxo) int {
 	return totalBalance
 }
 
-func floatAmountToSatoshi(amount float64) (int, error) {
-	bigA := new(big.Float).SetFloat64(amount)
+func stringAmountToSatoshi(amount string) int {
+	bigA, _ := new(big.Float).SetString(amount)
 	multiplier := new(big.Float).SetFloat64(math.Pow(10, 8))
 	bigA.Mul(bigA, multiplier)
-	return strconv.Atoi(bigA.String())
-
+	i, _ := bigA.Int64()
+	return int(i)
 }
 
 func sortUtxo(utxos []responses.Utxo) {

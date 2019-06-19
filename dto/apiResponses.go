@@ -10,3 +10,14 @@ type GetFeeResponse struct {
 	IsEnough                bool `json:"isEnough"`
 	IsBadFee                bool `json:"isBadFee"`
 }
+
+type GetEthFeeResponse struct {
+	Fee                     int  `json:"fee"`
+	GasPrice                int  `json:"gasPrice"`
+	Gas                     int  `json:"gas"`
+	Balance                 int  `json:"balance"`
+	MaxAmount               int  `json:"maxAmount"`
+	MaxAmountWithOptimalFee int  `json:"maxAmountWithOptimalFee"`
+	IsEnough                bool `json:"isEnough"`
+	IsBadFee                bool `json:"isBadFee"`
+}

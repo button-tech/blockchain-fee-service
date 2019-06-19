@@ -17,3 +17,10 @@ func GetLitecoinFee() (responses.LitecoinFeeResponse, responses.ResponseError) {
 	errors := call.response(&responseToClient)
 	return responseToClient, errors
 }
+
+func GetEthereumFee() (responses.EthereumFeeResponse, responses.ResponseError) {
+	call := apiCall("GET", "https://node.buttonwallet.com", "/eth/gasPrice", nil)
+	var responseToClient responses.EthereumFeeResponse
+	errors := call.response(&responseToClient)
+	return responseToClient, errors
+}

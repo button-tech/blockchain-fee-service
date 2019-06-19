@@ -24,3 +24,7 @@ type LitecoinFeeResponse struct {
 	LastForkHeight   int       `json:"last_fork_height"`
 	LastForkHash     string    `json:"last_fork_hash"`
 }
+
+type EthereumFeeResponse struct {
+	GasPrice int `json:"gasPrice"`
+}
