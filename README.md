@@ -1,6 +1,6 @@
 # Fee Service
 
-`/api/services/fee/{cryptocurrency}`
+`/fee/{cryptocurrency}`
 
 `cryptocurrency` = {bitcoin, ethereum, litecoin, bitcoinCash, ethereumClassic, waves, stellar, token}
 
