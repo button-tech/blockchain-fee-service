@@ -2,7 +2,7 @@
 
 `/api/services/fee/{cryptocurrency}`
 
-`cryptocurrency` = {bitcoin, ethereum, litecoin, bitcoinCash, ethereumClassic, Waves, Stellar, token}
+`cryptocurrency` = {bitcoin, ethereum, litecoin, bitcoinCash, ethereumClassic, waves, stellar, token}
 
 **Response: example UTXO Blockchain**
 ```
