@@ -24,3 +24,10 @@ func GetEthereumFee() (responses.EthereumFeeResponse, responses.ResponseError) {
 	errors := call.response(&responseToClient)
 	return responseToClient, errors
 }
+
+func GetEthereumClassicFee() (responses.EthereumFeeResponse, responses.ResponseError) {
+	call := apiCall("GET", "https://node.buttonwallet.com", "/etc/gasPrice", nil)
+	var responseToClient responses.EthereumFeeResponse
+	errors := call.response(&responseToClient)
+	return responseToClient, errors
+}

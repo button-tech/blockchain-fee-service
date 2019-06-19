@@ -86,6 +86,23 @@ func GetEthereumFee(address string, amount string) (dto.GetEthFeeResponse, respo
 	return fr, responses.ResponseError{}, nil
 }
 
+func GetEthereumClassicFee(address string, amount string) (dto.GetEthFeeResponse, responses.ResponseError, error) {
+	fee, apiErr := api.GetEthereumClassicFee()
+	if apiErr.Error != nil || apiErr.ApiError != nil {
+		return dto.GetEthFeeResponse{}, apiErr, nil
+	}
+	balance, apiErr := api.GetEthereumClassicBalance(address)
+	if apiErr.Error != nil || apiErr.ApiError != nil {
+		return dto.GetEthFeeResponse{}, apiErr, nil
+	}
+	bal, err := strconv.Atoi(balance.Balance)
+	fr, err := CalculateEthBasedFee(bal, fee.GasPrice, 21000, amount)
+	if err != nil {
+		return dto.GetEthFeeResponse{}, responses.ResponseError{}, err
+	}
+	return fr, responses.ResponseError{}, nil
+}
+
 func calcBitcoinFee(inputCount, outputCount, feePerByte int) int {
 	return (inputCount*148 + outputCount*34 + 10) * feePerByte
 }
