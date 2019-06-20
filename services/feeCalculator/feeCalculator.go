@@ -5,6 +5,7 @@ import (
 	"dev.azure.com/fee-service/dto/fee/requests"
 	"dev.azure.com/fee-service/dto/fee/responses"
 	"dev.azure.com/fee-service/services/api"
+	"sync"
 )
 
 type feeCalculator struct {
@@ -14,14 +15,31 @@ type feeCalculator struct {
 }
 
 func GetBitcoinFee(address string, amount string, receiversCount int) (dto.GetFeeResponse, responses.ResponseError, error) {
-	utxos, apiErr := api.GetBitcoinUtxo(address)
-	if apiErr.Error != nil || apiErr.ApiError != nil {
-		return dto.GetFeeResponse{}, apiErr, nil
+
+	var utxos responses.UtxoResponse
+	var apiUtxoErr, apiFeeErr responses.ResponseError
+	var feePerByte responses.BitcoinFeeResponse
+
+	var wg sync.WaitGroup
+
+	wg.Add(2)
+	go func() {
+		defer wg.Done()
+		utxos, apiUtxoErr = api.GetUtxo(address, "btc")
+	}()
+
+	go func() {
+		defer wg.Done()
+		feePerByte, apiFeeErr = api.GetBitcoinFee()
+	}()
+	wg.Wait()
+
+	if apiFeeErr.Error != nil || apiFeeErr.ApiError != nil {
+		return dto.GetFeeResponse{}, apiFeeErr, nil
+	} else if apiUtxoErr.Error != nil || apiUtxoErr.ApiError != nil {
+		return dto.GetFeeResponse{}, apiUtxoErr, nil
 	}
-	feePerByte, apiErr := api.GetBitcoinFee()
-	if apiErr.Error != nil || apiErr.ApiError != nil {
-		return dto.GetFeeResponse{}, apiErr, nil
-	}
+
 	fee, apiErr := calcUtxoFee(utxos.Utxo, amount, receiversCount, feeCalculator{
 		CalcFee:       calcBitcoinFee,
 		MinFeePerByte: 10,
@@ -30,18 +48,36 @@ func GetBitcoinFee(address string, amount string, receiversCount int) (dto.GetFe
 	if apiErr.Error != nil || apiErr.ApiError != nil {
 		return dto.GetFeeResponse{}, apiErr, nil
 	}
+
 	return fee, responses.ResponseError{}, nil
 }
 
 func GetLitecoinFee(address string, amount string, receiversCount int) (dto.GetFeeResponse, responses.ResponseError, error) {
-	utxos, apiErr := api.GetLitecoinUtxo(address)
-	if apiErr.Error != nil || apiErr.ApiError != nil {
-		return dto.GetFeeResponse{}, apiErr, nil
+
+	var utxos responses.UtxoResponse
+	var apiUtxoErr, apiFeeErr responses.ResponseError
+	var feePerByte responses.LitecoinFeeResponse
+
+	var wg sync.WaitGroup
+
+	wg.Add(2)
+	go func() {
+		defer wg.Done()
+		utxos, apiUtxoErr = api.GetUtxo(address, "ltc")
+	}()
+
+	go func() {
+		defer wg.Done()
+		feePerByte, apiFeeErr = api.GetLitecoinFee()
+	}()
+	wg.Wait()
+
+	if apiFeeErr.Error != nil || apiFeeErr.ApiError != nil {
+		return dto.GetFeeResponse{}, apiFeeErr, nil
+	} else if apiUtxoErr.Error != nil || apiUtxoErr.ApiError != nil {
+		return dto.GetFeeResponse{}, apiUtxoErr, nil
 	}
-	feePerByte, apiErr := api.GetLitecoinFee()
-	if apiErr.Error != nil || apiErr.ApiError != nil {
-		return dto.GetFeeResponse{}, apiErr, nil
-	}
+
 	fee, apiErr := calcUtxoFee(utxos.Utxo, amount, receiversCount, feeCalculator{
 		CalcFee:       calcLitecoinFee,
 		MinFeePerByte: 8,
@@ -54,7 +90,7 @@ func GetLitecoinFee(address string, amount string, receiversCount int) (dto.GetF
 }
 
 func GetBitcoinCashFee(address string, amount string, receiversCount int) (dto.GetFeeResponse, responses.ResponseError, error) {
-	utxos, apiErr := api.GetBitcoinCashUtxo(address)
+	utxos, apiErr := api.GetUtxo(address, "bch")
 	if apiErr.Error != nil || apiErr.ApiError != nil {
 		return dto.GetFeeResponse{}, apiErr, nil
 	}
@@ -70,14 +106,31 @@ func GetBitcoinCashFee(address string, amount string, receiversCount int) (dto.G
 }
 
 func GetEthereumFee(address string, amount string) (dto.GetEthFeeResponse, responses.ResponseError, error) {
-	fee, apiErr := api.GetEthereumFee()
-	if apiErr.Error != nil || apiErr.ApiError != nil {
-		return dto.GetEthFeeResponse{}, apiErr, nil
+
+	var fee responses.EthereumFeeResponse
+	var feeErr, balanceErr responses.ResponseError
+	var balance responses.CurrencyBalanceResponse
+
+	var wg sync.WaitGroup
+
+	wg.Add(2)
+	go func() {
+		defer wg.Done()
+		fee, feeErr = api.GetEthereumFee()
+	}()
+
+	go func() {
+		defer wg.Done()
+		balance, balanceErr = api.GetEthereumBalance(address)
+	}()
+	wg.Wait()
+
+	if feeErr.Error != nil || feeErr.ApiError != nil {
+		return dto.GetEthFeeResponse{}, feeErr, nil
+	} else if balanceErr.Error != nil || balanceErr.ApiError != nil {
+		return dto.GetEthFeeResponse{}, balanceErr, nil
 	}
-	balance, apiErr := api.GetEthereumBalance(address)
-	if apiErr.Error != nil || apiErr.ApiError != nil {
-		return dto.GetEthFeeResponse{}, apiErr, nil
-	}
+
 	fr, err := CalculateEthBasedFee(balance.Balance, fee.GasPrice, 21000, amount)
 	if err != nil {
 		return dto.GetEthFeeResponse{}, responses.ResponseError{}, err
@@ -86,14 +139,30 @@ func GetEthereumFee(address string, amount string) (dto.GetEthFeeResponse, respo
 }
 
 func GetEthereumClassicFee(address string, amount string) (dto.GetEthFeeResponse, responses.ResponseError, error) {
-	fee, apiErr := api.GetEthereumClassicFee()
-	if apiErr.Error != nil || apiErr.ApiError != nil {
-		return dto.GetEthFeeResponse{}, apiErr, nil
+	var fee responses.EthereumFeeResponse
+	var feeErr, balanceErr responses.ResponseError
+	var balance responses.CurrencyBalanceResponse
+
+	var wg sync.WaitGroup
+
+	wg.Add(2)
+	go func() {
+		defer wg.Done()
+		fee, feeErr = api.GetEthereumClassicFee()
+	}()
+
+	go func() {
+		defer wg.Done()
+		balance, balanceErr = api.GetEthereumClassicBalance(address)
+	}()
+	wg.Wait()
+
+	if feeErr.Error != nil || feeErr.ApiError != nil {
+		return dto.GetEthFeeResponse{}, feeErr, nil
+	} else if balanceErr.Error != nil || balanceErr.ApiError != nil {
+		return dto.GetEthFeeResponse{}, balanceErr, nil
 	}
-	balance, apiErr := api.GetEthereumClassicBalance(address)
-	if apiErr.Error != nil || apiErr.ApiError != nil {
-		return dto.GetEthFeeResponse{}, apiErr, nil
-	}
+
 	fr, err := CalculateEthBasedFee(balance.Balance, fee.GasPrice, 21000, amount)
 	if err != nil {
 		return dto.GetEthFeeResponse{}, responses.ResponseError{}, err
@@ -102,26 +171,49 @@ func GetEthereumClassicFee(address string, amount string) (dto.GetEthFeeResponse
 }
 
 func GetTokenFee(address, tokenAddress, amount string) (dto.GetTokenFeeResponse, responses.ResponseError, error) {
-	gasLimit, apiErr := api.GetTokenGasLimit(requests.TokenGasLimitRequest{
-		TokenAddress: tokenAddress,
-		ToAddress:    address,
-		Amount:       amount,
-	})
-	if apiErr.Error != nil || apiErr.ApiError != nil {
-		return dto.GetTokenFeeResponse{}, apiErr, nil
+	var gasLimitErr, feeErr, balanceErr, tokenBalanceErr responses.ResponseError
+	var gasLimit responses.TokenFeeResponse
+	var fee responses.EthereumFeeResponse
+	var balance, tokenBalance responses.CurrencyBalanceResponse
+
+	var wg sync.WaitGroup
+
+	wg.Add(4)
+	go func() {
+		defer wg.Done()
+		gasLimit, gasLimitErr = api.GetTokenGasLimit(requests.TokenGasLimitRequest{
+			TokenAddress: tokenAddress,
+			ToAddress:    address,
+			Amount:       amount,
+		})
+	}()
+
+	go func() {
+		defer wg.Done()
+		fee, feeErr = api.GetEthereumFee()
+	}()
+
+	go func() {
+		defer wg.Done()
+		balance, balanceErr = api.GetEthereumBalance(address)
+	}()
+
+	go func() {
+		defer wg.Done()
+		tokenBalance, tokenBalanceErr = api.GetTokenBalance(address, tokenAddress)
+	}()
+	wg.Wait()
+
+	if gasLimitErr.Error != nil || gasLimitErr.ApiError != nil {
+		return dto.GetTokenFeeResponse{}, gasLimitErr, nil
+	} else if feeErr.Error != nil || feeErr.ApiError != nil {
+		return dto.GetTokenFeeResponse{}, feeErr, nil
+	} else if balanceErr.Error != nil || balanceErr.ApiError != nil {
+		return dto.GetTokenFeeResponse{}, balanceErr, nil
+	} else if tokenBalanceErr.Error != nil || tokenBalanceErr.ApiError != nil {
+		return dto.GetTokenFeeResponse{}, tokenBalanceErr, nil
 	}
-	fee, apiErr := api.GetEthereumFee()
-	if apiErr.Error != nil || apiErr.ApiError != nil {
-		return dto.GetTokenFeeResponse{}, apiErr, nil
-	}
-	balance, apiErr := api.GetEthereumBalance(address)
-	if apiErr.Error != nil || apiErr.ApiError != nil {
-		return dto.GetTokenFeeResponse{}, apiErr, nil
-	}
-	tokenBalance, apiErr := api.GetTokenBalance(address, tokenAddress)
-	if apiErr.Error != nil || apiErr.ApiError != nil {
-		return dto.GetTokenFeeResponse{}, apiErr, nil
-	}
+
 	fr, err := CalculateTokenFee(balance.Balance, tokenBalance.Balance, fee.GasPrice, gasLimit.GasLimit, amount)
 	if err != nil {
 		return dto.GetTokenFeeResponse{}, responses.ResponseError{}, err
@@ -142,13 +234,13 @@ func GetWavesFee(address string, amount string) (dto.GetWavesAndStellarFeeRespon
 			maxAmount = 0
 		}
 	}
-	return dto.GetWavesAndStellarFeeResponse{
-		Balance:                 balance.Balance,
+	return dto.GetWavesAndStellarFeeResponse{SharedApiResp: &dto.SharedApiResp{
+		Balance:                 uint64(balance.Balance),
 		Fee:                     300000,
-		MaxAmountWithOptimalFee: maxAmount,
+		MaxAmountWithOptimalFee: uint64(maxAmount),
 		IsBadFee:                false,
 		IsEnough:                isEnough,
-	}, responses.ResponseError{}, nil
+	}}, responses.ResponseError{}, nil
 }
 
 func GetStellarFee(address string, amount string) (dto.GetWavesAndStellarFeeResponse, responses.ResponseError, error) {

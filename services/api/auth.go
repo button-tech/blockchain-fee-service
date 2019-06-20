@@ -31,13 +31,17 @@ func apiCall(method, apiUrl, path string, data interface{}) apiResponse {
 			}
 		}
 	}
-	if method == "GET" {
+
+	switch method {
+	case "GET":
 		response, respErr = req.Get(uri, authHeader)
-	} else if method == "POST" {
+	case "POST":
 		response, respErr = req.Post(uri, authHeader, data)
-	} else if method == "PATCH" {
+	case "PUT":
+		response, respErr = req.Put(uri, authHeader, data)
+	case "PATCH":
 		response, respErr = req.Patch(uri, authHeader, data)
-	} else if method == "DELETE" {
+	case "DELETE":
 		response, respErr = req.Delete(uri, authHeader)
 	}
 
@@ -60,21 +64,15 @@ func apiCall(method, apiUrl, path string, data interface{}) apiResponse {
 
 func (res *apiResponse) response(v interface{}) responses.ResponseError {
 	if res.ApiError != nil {
-		//var e interface{}
-		//if err := res.ApiError.(*req.Resp).ToJSON(&e); err != nil {
-		//	return responses.ResponseError{
-		//		Error: err,
-		//	}
-		//}
 		return responses.ResponseError{
 			ApiError: res.ApiError.(*req.Resp).String(),
 		}
-	}
-	if res.Error != nil {
+	} else if res.Error != nil {
 		return responses.ResponseError{
 			Error: res.Error,
 		}
 	}
+
 	if err := res.Result.(*req.Resp).ToJSON(&v); err != nil {
 		log.Println(err.Error())
 		return responses.ResponseError{
@@ -88,14 +86,11 @@ func serialize(data interface{}) ([]byte, error) {
 	switch data.(type) {
 	case []byte:
 		return data.([]byte), nil
-		break
 	default:
 		result, err := json.Marshal(data)
 		if err != nil {
 			return nil, err
 		}
 		return result, nil
-		break
 	}
-	return nil, nil
 }

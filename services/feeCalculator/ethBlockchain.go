@@ -10,20 +10,25 @@ import (
 func CalculateEthBasedFee(balance string, gasPrice, gas int, amount string) (dto.GetEthFeeResponse, error) {
 	wei := stringAmountToWei(amount)
 	bal, ok := StringToBigInt(balance)
-	if ok != true {
+	if !ok {
 		return dto.GetEthFeeResponse{}, errors.CustomError("failed to parse String to big.Int")
 	}
+
 	bigBalance := bal
 	if bigBalance.Cmp(wei) < 0 {
 		return dto.GetEthFeeResponse{}, nil
 	}
-	fr := dto.GetEthFeeResponse{
-		Balance: int(bal.Uint64()),
-		Gas:     gas,
-	}
+
+	fr := &dto.GetEthFeeResponse{SharedApiResp: &dto.SharedApiResp{
+		Balance: bal.Uint64(),
+	}}
 
 	bigGasPrice := IntToBigInt(gasPrice)
 	bigGas := IntToBigInt(gas)
+
+	fr.GasPrice = bigGasPrice.Uint64()
+	fr.Gas = bigGas.Uint64()
+
 	defaultFee := Mul(bigGasPrice, bigGas)
 	bigOptimalGasPriceNotDivided := Mul(bigGasPrice, IntToBigInt(6))
 	bigOptimalGasPrice := Div(bigOptimalGasPriceNotDivided, IntToBigInt(5))
@@ -36,8 +41,8 @@ func CalculateEthBasedFee(balance string, gasPrice, gas int, amount string) (dto
 	con2 := bigBalance.Cmp(defaultSendingAmount) >= 0 && bigBalance.Cmp(optimalSendingAmount) < 0
 	con3 := bigBalance.Cmp(optimalSendingAmount) >= 0
 
-	maxAmount := int(Sub(bigBalance, defaultFee).Int64())
-	maxAmountWithOptimalFee := int(Sub(bigBalance, optimalFee).Int64())
+	maxAmount := Sub(bigBalance, defaultFee).Uint64()
+	maxAmountWithOptimalFee := Sub(bigBalance, optimalFee).Uint64()
 
 	if maxAmount > 0 {
 		fr.MaxAmount = maxAmount
@@ -49,28 +54,26 @@ func CalculateEthBasedFee(balance string, gasPrice, gas int, amount string) (dto
 
 	if con1 {
 		fr.Fee = int(defaultFee.Int64())
-		fr.GasPrice = gasPrice
 	} else if con2 {
 		fr.Fee = int(defaultFee.Int64())
 		fr.IsEnough = true
 		fr.IsBadFee = true
-		fr.GasPrice = gasPrice
 	} else if con3 {
 		fr.Fee = int(optimalFee.Int64())
 		fr.IsEnough = true
-		fr.GasPrice = int(bigOptimalGasPrice.Int64())
+		fr.GasPrice = bigOptimalGasPrice.Uint64()
 	}
 
-	return fr, nil
+	return *fr, nil
 }
 
 func CalculateTokenFee(ethBalance, tokenBalance string, gasPrice, gas int, amount string) (dto.GetTokenFeeResponse, error) {
 	ethBal, ok := StringToBigInt(ethBalance)
-	if ok != true {
+	if !ok {
 		return dto.GetTokenFeeResponse{}, errors.CustomError("failed to parse String to big.Int")
 	}
 	tokenBal, ok := StringToBigInt(tokenBalance)
-	if ok != true {
+	if !ok {
 		return dto.GetTokenFeeResponse{}, errors.CustomError("failed to parse String to big.Int")
 	}
 	tokenVal := stringAmountToWei(amount)
@@ -78,20 +81,22 @@ func CalculateTokenFee(ethBalance, tokenBalance string, gasPrice, gas int, amoun
 	if err != nil {
 		return dto.GetTokenFeeResponse{}, err
 	}
-	f := dto.GetTokenFeeResponse{
-		Balance:                 int(ethBal.Int64()),
-		TokenBalance:            int(tokenBal.Int64()),
-		IsBadFee:                eth.IsBadFee,
-		IsEnough:                eth.IsEnough,
-		MaxAmountWithOptimalFee: int(tokenBal.Int64()),
-		GasPrice:                gasPrice,
-		Gas:                     gas,
-		Fee:                     eth.Fee,
+	f := &dto.GetTokenFeeResponse{SharedApiResp:
+		&dto.SharedApiResp{
+			Balance:                 ethBal.Uint64(),
+			IsBadFee:                eth.IsBadFee,
+			IsEnough:                eth.IsEnough,
+			MaxAmountWithOptimalFee: tokenBal.Uint64(),
+			GasPrice:                eth.GasPrice,
+			Gas:                     uint64(gas),
+			Fee:                     eth.Fee,
+		},
+		TokenBalance:            tokenBal.Uint64(),
 	}
 	if tokenBal.Cmp(tokenVal) < 0 {
 		f.IsEnough = false
 	}
-	return f, nil
+	return *f, nil
 
 }
 

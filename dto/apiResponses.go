@@ -1,42 +1,31 @@
 package dto
 
-type GetFeeResponse struct {
+type SharedApiResp struct {
 	Fee                     int  `json:"fee"`
-	Input                   int  `json:"input"`
-	Output                  int  `json:"output"`
-	Balance                 int  `json:"balance"`
-	MaxAmount               int  `json:"maxAmount"`
-	MaxAmountWithOptimalFee int  `json:"maxAmountWithOptimalFee"`
+	Balance                 uint64  `json:"balance"`
+	MaxAmountWithOptimalFee uint64  `json:"maxAmountWithOptimalFee"`
+	MaxAmount               uint64  `json:"maxAmount,omitempty"`
 	IsEnough                bool `json:"isEnough"`
 	IsBadFee                bool `json:"isBadFee"`
+	GasPrice                uint64  `json:"gasPrice,omitempty"`
+	Gas                     uint64  `json:"gas,omitempty"`
+}
+
+type GetFeeResponse struct {
+	*SharedApiResp
+	Input                   int  `json:"input"`
+	Output                  int  `json:"output"`
 }
 
 type GetEthFeeResponse struct {
-	Fee                     int  `json:"fee"`
-	GasPrice                int  `json:"gasPrice"`
-	Gas                     int  `json:"gas"`
-	Balance                 int  `json:"balance"`
-	MaxAmount               int  `json:"maxAmount"`
-	MaxAmountWithOptimalFee int  `json:"maxAmountWithOptimalFee"`
-	IsEnough                bool `json:"isEnough"`
-	IsBadFee                bool `json:"isBadFee"`
+	*SharedApiResp
 }
 
 type GetWavesAndStellarFeeResponse struct {
-	Fee                     int  `json:"fee"`
-	Balance                 int  `json:"balance"`
-	MaxAmountWithOptimalFee int  `json:"maxAmountWithOptimalFee"`
-	IsEnough                bool `json:"isEnough"`
-	IsBadFee                bool `json:"isBadFee"`
+	*SharedApiResp
 }
 
 type GetTokenFeeResponse struct {
-	Fee                     int  `json:"fee"`
-	GasPrice                int  `json:"gasPrice"`
-	Gas                     int  `json:"gas"`
-	Balance                 int  `json:"balance"`
-	TokenBalance            int  `json:"tokenBalance"`
-	MaxAmountWithOptimalFee int  `json:"maxAmountWithOptimalFee"`
-	IsEnough                bool `json:"isEnough"`
-	IsBadFee                bool `json:"isBadFee"`
+	*SharedApiResp
+	TokenBalance            uint64  `json:"tokenBalance"`
 }

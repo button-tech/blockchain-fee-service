@@ -1,6 +1,6 @@
 package responses
 
-type BitcoinUtxoResponse struct {
+type UtxoResponse struct {
 	Utxo []Utxo `json:"utxo"`
 }
 

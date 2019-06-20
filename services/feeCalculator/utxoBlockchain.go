@@ -100,15 +100,17 @@ func calcUtxoFee(utxos []responses.Utxo, amount string, receiversCount int, feeC
 		}
 	}
 
-	return dto.GetFeeResponse{
-		Fee:                     ux.Fee,
+	return dto.GetFeeResponse{SharedApiResp:
+		&dto.SharedApiResp{
+			Fee:                     ux.Fee,
+			Balance:                 uint64(ux.TotalBalance),
+			MaxAmount:               uint64(ux.MaxAmount),
+			MaxAmountWithOptimalFee: uint64(ux.MaxUsefulAmount),
+			IsEnough:                ux.IsEnough,
+			IsBadFee:                ux.IsBadFee,
+		},
 		Input:                   ux.Input,
 		Output:                  ux.Output,
-		Balance:                 ux.TotalBalance,
-		MaxAmount:               ux.MaxAmount,
-		MaxAmountWithOptimalFee: ux.MaxUsefulAmount,
-		IsEnough:                ux.IsEnough,
-		IsBadFee:                ux.IsBadFee,
 	}, responses.ResponseError{}
 }
 

@@ -1,13 +1,16 @@
 package dto
 
-type GetFeeRequest struct {
+type SharedApiReq struct {
 	FromAddress    string `json:"fromAddress"`
 	Amount         string `json:"amount"`
+}
+
+type GetFeeRequest struct {
+	*SharedApiReq
 	ReceiversCount int    `json:"receiversCount"`
 }
 
 type GetTokenFeeRequest struct {
-	FromAddress      string `json:"fromAddress"`
-	Amount       string `json:"amount"`
+	*SharedApiReq
 	TokenAddress string `json:"tokenAddress"`
 }

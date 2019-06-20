@@ -7,20 +7,20 @@ func CalcStellarFee(balance string, amount string, fee int) dto.GetWavesAndStell
 	bal := stringAmountToSatoshi(balance)
 	val := stringAmountToSatoshi(amount)
 	activeBalance := bal - minRequiredBalance
-	f := dto.GetWavesAndStellarFeeResponse{
-		Balance: bal,
+	f := &dto.GetWavesAndStellarFeeResponse{SharedApiResp: &dto.SharedApiResp{
+		Balance: uint64(bal),
 		Fee:     fee,
-	}
+	}}
 	balanceWithoutFee := activeBalance - fee
 	if balanceWithoutFee <= 0 {
 		f.MaxAmountWithOptimalFee = 0
 	} else {
-		f.MaxAmountWithOptimalFee = balanceWithoutFee
+		f.MaxAmountWithOptimalFee = uint64(balanceWithoutFee)
 	}
 
 	if balanceWithoutFee-val >= 0 && val >= minRequiredBalance {
 		f.IsEnough = true
 	}
 
-	return f
+	return *f
 }
