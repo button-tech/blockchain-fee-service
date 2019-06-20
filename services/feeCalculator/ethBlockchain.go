@@ -36,8 +36,16 @@ func CalculateEthBasedFee(balance string, gasPrice, gas int, amount string) (dto
 	con2 := bigBalance.Cmp(defaultSendingAmount) >= 0 && bigBalance.Cmp(optimalSendingAmount) < 0
 	con3 := bigBalance.Cmp(optimalSendingAmount) >= 0
 
-	fr.MaxAmount = int(Sub(bigBalance, defaultFee).Int64())
-	fr.MaxAmountWithOptimalFee = int(Sub(bigBalance, optimalFee).Int64())
+	maxAmount := int(Sub(bigBalance, defaultFee).Int64())
+	maxAmountWithOptimalFee := int(Sub(bigBalance, optimalFee).Int64())
+
+	if maxAmount > 0 {
+		fr.MaxAmount = maxAmount
+	}
+
+	if maxAmountWithOptimalFee > 0 {
+		fr.MaxAmountWithOptimalFee = maxAmountWithOptimalFee
+	}
 
 	if con1 {
 		fr.Fee = int(defaultFee.Int64())
