@@ -1,6 +1,5 @@
 # Blockchain Fee Service
 - [About](#about)
-    - [Supported currencies](#supported-currencies)
 - [Installation](#installation)
 - [Run](#run)
 - [Run Docker container](#run-docker-container)
