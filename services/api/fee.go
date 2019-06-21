@@ -1,8 +1,8 @@
 package api
 
 import (
-	"dev.azure.com/fee-service/dto/fee/requests"
-	"dev.azure.com/fee-service/dto/fee/responses"
+	"github.com/button-tech/blockchain-fee-service/dto/fee/requests"
+	"github.com/button-tech/blockchain-fee-service/dto/fee/responses"
 )
 
 func GetBitcoinFee() (responses.BitcoinFeeResponse, responses.ResponseError) {

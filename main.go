@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 
-	"dev.azure.com/fee-service/services/server"
+	"github.com/button-tech/blockchain-fee-service/services/server"
 	"github.com/gin-gonic/gin"
 )
 

@@ -1,7 +1,7 @@
 package server
 
 import (
-	"dev.azure.com/fee-service/services/server/handlers"
+	"github.com/button-tech/blockchain-fee-service/services/server/handlers"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )

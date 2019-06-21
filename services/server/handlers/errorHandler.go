@@ -1,8 +1,8 @@
 package handlers
 
 import (
-	"dev.azure.com/fee-service/dto/errors"
-	"dev.azure.com/fee-service/dto/fee/responses"
+	"github.com/button-tech/blockchain-fee-service/dto/errors"
+	"github.com/button-tech/blockchain-fee-service/dto/fee/responses"
 	"log"
 	"net/http"
 )

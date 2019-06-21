@@ -1,10 +1,10 @@
 package feeCalculator
 
 import (
-	"dev.azure.com/fee-service/dto"
-	"dev.azure.com/fee-service/dto/fee/requests"
-	"dev.azure.com/fee-service/dto/fee/responses"
-	"dev.azure.com/fee-service/services/api"
+	"github.com/button-tech/blockchain-fee-service/dto"
+	"github.com/button-tech/blockchain-fee-service/dto/fee/requests"
+	"github.com/button-tech/blockchain-fee-service/dto/fee/responses"
+	"github.com/button-tech/blockchain-fee-service/services/api"
 	"sync"
 )
 

@@ -1,10 +1,10 @@
 package handlers
 
 import (
-	"dev.azure.com/fee-service/dto"
-	"dev.azure.com/fee-service/dto/errors"
-	"dev.azure.com/fee-service/dto/fee/responses"
-	"dev.azure.com/fee-service/services/feeCalculator"
+	"github.com/button-tech/blockchain-fee-service/dto"
+	"github.com/button-tech/blockchain-fee-service/dto/errors"
+	"github.com/button-tech/blockchain-fee-service/dto/fee/responses"
+	"github.com/button-tech/blockchain-fee-service/services/feeCalculator"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )

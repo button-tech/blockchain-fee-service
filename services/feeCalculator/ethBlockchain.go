@@ -1,8 +1,8 @@
 package feeCalculator
 
 import (
-	"dev.azure.com/fee-service/dto"
-	"dev.azure.com/fee-service/dto/errors"
+	"github.com/button-tech/blockchain-fee-service/dto"
+	"github.com/button-tech/blockchain-fee-service/dto/errors"
 	"math"
 	"math/big"
 )

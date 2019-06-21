@@ -1,6 +1,6 @@
 package feeCalculator
 
-import "dev.azure.com/fee-service/dto"
+import "github.com/button-tech/blockchain-fee-service/dto"
 
 func CalcStellarFee(balance string, amount string, fee int) dto.GetWavesAndStellarFeeResponse {
 	minRequiredBalance := 100000000
