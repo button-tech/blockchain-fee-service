@@ -201,11 +201,17 @@ func GetTokenFee(address, tokenAddress, amount string) (dto.GetTokenFeeResponse,
 	go func() {
 		defer wg.Done()
 		tokenBalance, tokenBalanceErr = api.GetTokenBalance(address, tokenAddress)
+		if tokenBalance.Balance == "" {
+			tokenBalance.Balance = "0"
+		}
 	}()
 	wg.Wait()
 
 	if gasLimitErr.Error != nil || gasLimitErr.ApiError != nil {
-		return dto.GetTokenFeeResponse{}, gasLimitErr, nil
+		// May not be enough ethereum for transaction fee
+		gasLimit = responses.TokenFeeResponse{
+			GasLimit: 38000,
+		}
 	} else if feeErr.Error != nil || feeErr.ApiError != nil {
 		return dto.GetTokenFeeResponse{}, feeErr, nil
 	} else if balanceErr.Error != nil || balanceErr.ApiError != nil {
