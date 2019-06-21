@@ -1,9 +1,24 @@
 # Blockchain Fee Service
+- [About](#about)
+    - [Supported currencies](#supported-currencies) 
+- [Installation](#installation)
+- [Run](#run)
+- [Run Docker container](#run-docker-container)
+- [Docker build locally](#docker-build-locally)
+- [Usage](#usage)
+  - [Bitcoin](#bitcoin)
+  - [BitcoinCash](#bitcoincash)
+  - [Litecoin](#litecoin)
+  - [Ethereum](#ethereum)
+  - [EthereumClassic](#ethereumClassic)
+  - [Token](#token)
+  - [Waves](#waves)
+  - [Stellar](#stellar)
 ## About
 Rest api for:
 1. Calculating actual fee
 2. Getting maximal sending amount
-3. Getting maximal sending amount with optimal fee
+3. Getting maximal sending amount with optimal fee 
 4. Getting balance
 
 **Supported currencies**
@@ -48,7 +63,7 @@ OR
 sudo docker build -t blockchain-fee-service
 ```
 ## Usage `/fee/{cryptocurrency}`
-#### `POST /fee/bitcoin`
+#### Bitcoin `POST /fee/bitcoin`
 **Request body**
 ```
 {
@@ -70,7 +85,7 @@ sudo docker build -t blockchain-fee-service
 }
 ```
 
-#### `POST /fee/bitcoinCash`
+#### BitcoinCash`POST /fee/bitcoinCash`
 **Request body**
 ```
 {
@@ -92,7 +107,7 @@ sudo docker build -t blockchain-fee-service
 }
 ```
 
-#### `POST /fee/litecoin`
+#### Litecoin `POST /fee/litecoin`
 **Request body**
 ```
 {
@@ -114,29 +129,7 @@ sudo docker build -t blockchain-fee-service
 }
 ```
 
-#### `POST /fee/litecoin`
-**Request body**
-```
-{
-	"fromAddress": "LZnXf5KUQTaPFZe2Bb3YW3Li1kWdL4s6gX",
-	"amount": "0.002583021"
-}
-```
-**Response**
-```
-{
-    "fee": 2034,
-    "balance": 4825099,
-    "maxAmountWithOptimalFee": 4779731,
-    "maxAmount": 4808203,
-    "isEnough": true,
-    "isBadFee": false,
-    "input": 1,
-    "output": 2
-}
-```
-
-#### `POST /fee/ethereum`
+#### Ethereum `POST /fee/ethereum`
 **Request body**
 ```
 {
@@ -158,7 +151,7 @@ sudo docker build -t blockchain-fee-service
 }
 ```
 
-#### `POST /fee/ethereumClassic`
+#### EthereumClassic `POST /fee/ethereumClassic`
 **Request body**
 ```
 {
@@ -180,7 +173,7 @@ sudo docker build -t blockchain-fee-service
 }
 ```
 
-#### `POST /fee/token`
+#### Token `POST /fee/token`
 **Request body**
 ```
 {
@@ -204,7 +197,7 @@ sudo docker build -t blockchain-fee-service
 }
 ```
 
-#### `POST /fee/waves`
+#### Waves `POST /fee/waves`
 **Request body**
 ```
 {
@@ -224,7 +217,7 @@ sudo docker build -t blockchain-fee-service
 }
 ```
 
-#### `POST /fee/stellar`
+#### Stellar `POST /fee/stellar`
 **Request body**
 ```
 {
