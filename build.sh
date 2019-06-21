@@ -11,4 +11,4 @@ cat ~/.ssh/sendgrid_rsa > ./ssh_key/id_rsa
 
 chmod 600 ./ssh_key/id_rsa
 
-docker build -t $acc/fee-service .
+docker build -t $acc/blockchain-fee-service .
