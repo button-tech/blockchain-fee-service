@@ -1,24 +1,28 @@
 package dto
 
+type SharedEthBasedResp struct {
+	GasPrice uint64 `json:"gasPrice"`
+	Gas      uint64 `json:"gas"`
+}
+
 type SharedApiResp struct {
-	Fee                     int  `json:"fee"`
-	Balance                 uint64  `json:"balance"`
-	MaxAmountWithOptimalFee uint64  `json:"maxAmountWithOptimalFee"`
-	MaxAmount               uint64  `json:"maxAmount,omitempty"`
-	IsEnough                bool `json:"isEnough"`
-	IsBadFee                bool `json:"isBadFee"`
-	GasPrice                uint64  `json:"gasPrice,omitempty"`
-	Gas                     uint64  `json:"gas,omitempty"`
+	Fee                     int    `json:"fee"`
+	Balance                 uint64 `json:"balance"`
+	MaxAmountWithOptimalFee uint64 `json:"maxAmountWithOptimalFee"`
+	MaxAmount               uint64 `json:"maxAmount"`
+	IsEnough                bool   `json:"isEnough"`
+	IsBadFee                bool   `json:"isBadFee"`
 }
 
 type GetFeeResponse struct {
 	*SharedApiResp
-	Input                   int  `json:"input"`
-	Output                  int  `json:"output"`
+	Input  int `json:"input"`
+	Output int `json:"output"`
 }
 
 type GetEthFeeResponse struct {
 	*SharedApiResp
+	*SharedEthBasedResp
 }
 
 type GetWavesAndStellarFeeResponse struct {
@@ -27,5 +31,6 @@ type GetWavesAndStellarFeeResponse struct {
 
 type GetTokenFeeResponse struct {
 	*SharedApiResp
-	TokenBalance            uint64  `json:"tokenBalance"`
+	*SharedEthBasedResp
+	TokenBalance uint64 `json:"tokenBalance"`
 }

@@ -5,7 +5,7 @@ import (
 )
 
 func GetUtxo(address, currency string) (responses.UtxoResponse, responses.ResponseError) {
-	call := apiCall("GET", "https://node.buttonwallet.com/", currency + "/utxo/"+address, nil)
+	call := apiCall("GET", "https://node.buttonwallet.com/", currency+"/utxo/"+address, nil)
 	var responseToClient responses.UtxoResponse
 	errors := call.response(&responseToClient)
 	return responseToClient, errors

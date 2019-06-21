@@ -238,6 +238,7 @@ func GetWavesFee(address string, amount string) (dto.GetWavesAndStellarFeeRespon
 		Balance:                 uint64(balance.Balance),
 		Fee:                     300000,
 		MaxAmountWithOptimalFee: uint64(maxAmount),
+		MaxAmount:               uint64(maxAmount),
 		IsBadFee:                false,
 		IsEnough:                isEnough,
 	}}, responses.ResponseError{}, nil

@@ -1,8 +1,8 @@
 package api
 
 import (
-	"github.com/button-tech/blockchain-fee-service/dto/fee/responses"
 	"encoding/json"
+	"github.com/button-tech/blockchain-fee-service/dto/fee/responses"
 	"github.com/imroc/req"
 	"log"
 	"net/http"

@@ -15,13 +15,10 @@ func CalculateEthBasedFee(balance string, gasPrice, gas int, amount string) (dto
 	}
 
 	bigBalance := bal
-	if bigBalance.Cmp(wei) < 0 {
-		return dto.GetEthFeeResponse{}, nil
-	}
 
 	fr := &dto.GetEthFeeResponse{SharedApiResp: &dto.SharedApiResp{
 		Balance: bal.Uint64(),
-	}}
+	}, SharedEthBasedResp: &dto.SharedEthBasedResp{}}
 
 	bigGasPrice := IntToBigInt(gasPrice)
 	bigGas := IntToBigInt(gas)
@@ -33,6 +30,13 @@ func CalculateEthBasedFee(balance string, gasPrice, gas int, amount string) (dto
 	bigOptimalGasPriceNotDivided := Mul(bigGasPrice, IntToBigInt(6))
 	bigOptimalGasPrice := Div(bigOptimalGasPriceNotDivided, IntToBigInt(5))
 	optimalFee := Mul(bigOptimalGasPrice, bigGas)
+
+	if bigBalance.Cmp(wei) < 0 {
+		fr.Fee = int(defaultFee.Int64())
+		fr.Gas = bigOptimalGasPrice.Uint64()
+		fr.GasPrice = bigOptimalGasPrice.Uint64()
+		return *fr, nil
+	}
 
 	defaultSendingAmount := Add(wei, defaultFee)
 	optimalSendingAmount := Add(wei, optimalFee)
@@ -81,17 +85,17 @@ func CalculateTokenFee(ethBalance, tokenBalance string, gasPrice, gas int, amoun
 	if err != nil {
 		return dto.GetTokenFeeResponse{}, err
 	}
-	f := &dto.GetTokenFeeResponse{SharedApiResp:
-		&dto.SharedApiResp{
-			Balance:                 ethBal.Uint64(),
-			IsBadFee:                eth.IsBadFee,
-			IsEnough:                eth.IsEnough,
-			MaxAmountWithOptimalFee: tokenBal.Uint64(),
-			GasPrice:                eth.GasPrice,
-			Gas:                     uint64(gas),
-			Fee:                     eth.Fee,
-		},
-		TokenBalance:            tokenBal.Uint64(),
+	f := &dto.GetTokenFeeResponse{SharedApiResp: &dto.SharedApiResp{
+		Balance:                 ethBal.Uint64(),
+		IsBadFee:                eth.IsBadFee,
+		IsEnough:                eth.IsEnough,
+		MaxAmountWithOptimalFee: tokenBal.Uint64(),
+		Fee:                     eth.Fee,
+	}, SharedEthBasedResp: &dto.SharedEthBasedResp{
+		GasPrice: eth.GasPrice,
+		Gas:      uint64(gas),
+	},
+		TokenBalance: tokenBal.Uint64(),
 	}
 	if tokenBal.Cmp(tokenVal) < 0 {
 		f.IsEnough = false
