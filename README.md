@@ -55,7 +55,6 @@ docker run -d -p 8080:8080 buttonwallet/blockchain-fee-service
 ```
 chmod +x build.sh
 acc=nickname ./build.sh
-
 ```
 OR
 ```
