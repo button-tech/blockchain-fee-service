@@ -1,24 +1,24 @@
 # Blockchain Fee Service
 - [About](#about)
-    - [Supported currencies](#supported-currencies) 
+    - [Supported currencies](#supported-currencies)
 - [Installation](#installation)
 - [Run](#run)
 - [Run Docker container](#run-docker-container)
 - [Docker build locally](#docker-build-locally)
-- [Usage](#usage)
-  - [Bitcoin](#bitcoin)
-  - [BitcoinCash](#bitcoincash)
-  - [Litecoin](#litecoin)
-  - [Ethereum](#ethereum)
-  - [EthereumClassic](#ethereumClassic)
-  - [Token](#token)
-  - [Waves](#waves)
-  - [Stellar](#stellar)
+- [Usage](#usage-feecryptocurrency)
+  - [Bitcoin](#bitcoin-post-feebitcoin)
+  - [BitcoinCash](#bitcoincashpost-feebitcoincash)
+  - [Litecoin](#litecoin-post-feelitecoin)
+  - [Ethereum](#ethereum-post-feeethereum)
+  - [EthereumClassic](#ethereumclassic-post-feeethereumclassic)
+  - [Token](#token-post-feetoken)
+  - [Waves](#waves-post-feewaves)
+  - [Stellar](#stellar-post-feestellar)
 ## About
 Rest api for:
 1. Calculating actual fee
 2. Getting maximal sending amount
-3. Getting maximal sending amount with optimal fee 
+3. Getting maximal sending amount with optimal fee
 4. Getting balance
 
 **Supported currencies**
