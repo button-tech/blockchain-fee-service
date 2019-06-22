@@ -1,19 +1,4 @@
 # Blockchain Fee Service
-- [About](#about)
-- [Installation](#installation)
-- [Run](#run)
-- [Run Docker container](#run-docker-container)
-- [Docker build locally](#docker-build-locally)
-- [Usage](#usage-feecryptocurrency)
-  - [Bitcoin](#bitcoin-post-feebitcoin)
-  - [BitcoinCash](#bitcoincashpost-feebitcoincash)
-  - [Litecoin](#litecoin-post-feelitecoin)
-  - [Ethereum](#ethereum-post-feeethereum)
-  - [EthereumClassic](#ethereumclassic-post-feeethereumclassic)
-  - [Token](#token-post-feetoken)
-  - [Waves](#waves-post-feewaves)
-  - [Stellar](#stellar-post-feestellar)
-## About
 Rest api for:
 1. Calculating actual fee
 2. Getting maximal sending amount
@@ -29,6 +14,20 @@ Rest api for:
 - Waves
 - Stellar
 - Ethereum ERC20 tokens
+
+- [Installation](#installation)
+- [Run](#run)
+- [Run Docker container](#run-docker-container)
+- [Docker build locally](#docker-build-locally)
+- [Usage](#usage-feecryptocurrency)
+  - [Bitcoin](#bitcoin-post-feebitcoin)
+  - [BitcoinCash](#bitcoincashpost-feebitcoincash)
+  - [Litecoin](#litecoin-post-feelitecoin)
+  - [Ethereum](#ethereum-post-feeethereum)
+  - [EthereumClassic](#ethereumclassic-post-feeethereumclassic)
+  - [Token](#token-post-feetoken)
+  - [Waves](#waves-post-feewaves)
+  - [Stellar](#stellar-post-feestellar)
 
 ## Getting Started
 ### Installation
