@@ -15,8 +15,7 @@ Rest api for:
 - Stellar
 - Ethereum ERC20 tokens.  
 
-
-
+## Navigation
 - [Installation](#installation)
 - [Run](#run)
 - [Run Docker container](#run-docker-container)
