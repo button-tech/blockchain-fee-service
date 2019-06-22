@@ -13,7 +13,7 @@ Rest api for:
 - EthereumClassic
 - Waves
 - Stellar
-- Ethereum ERC20 tokens
+- Ethereum ERC20 tokens.  
 
 
 
