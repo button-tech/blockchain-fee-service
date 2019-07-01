@@ -58,6 +58,8 @@ func CalculateEthBasedFee(balance string, gasPrice, gas int, amount string) (dto
 
 	if con1 {
 		fr.Fee = int(defaultFee.Int64())
+		fr.MaxAmount = 0
+		fr.MaxAmountWithOptimalFee = 0
 	} else if con2 {
 		fr.Fee = int(defaultFee.Int64())
 		fr.IsEnough = true
