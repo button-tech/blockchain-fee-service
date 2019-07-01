@@ -11,7 +11,7 @@ func CalcStellarFee(balance string, amount string, fee int) dto.GetWavesAndStell
 		Balance: uint64(bal),
 		Fee:     fee,
 	}}
-	balanceWithoutFee := activeBalance - fee
+	balanceWithoutFee := activeBalance - fee - 1
 	if balanceWithoutFee <= 0 {
 		f.MaxAmountWithOptimalFee = 0
 	} else {
@@ -19,7 +19,7 @@ func CalcStellarFee(balance string, amount string, fee int) dto.GetWavesAndStell
 		f.MaxAmount = uint64(balanceWithoutFee)
 	}
 
-	if balanceWithoutFee-val >= 0 && val >= minRequiredBalance {
+	if balanceWithoutFee-val >= 0 {
 		f.IsEnough = true
 	}
 
