@@ -1,5 +1,7 @@
 package dto
 
+import "github.com/button-tech/blockchain-fee-service/dto/fee/responses"
+
 type SharedEthBasedResp struct {
 	GasPrice uint64 `json:"gasPrice"`
 	Gas      uint64 `json:"gas"`
@@ -16,8 +18,9 @@ type SharedApiResp struct {
 
 type GetFeeResponse struct {
 	*SharedApiResp
-	Input  int `json:"input"`
-	Output int `json:"output"`
+	Inputs []responses.Utxo `json:"inputs"`
+	Input  int              `json:"input"`
+	Output int              `json:"output"`
 }
 
 type GetEthFeeResponse struct {

@@ -53,8 +53,10 @@ func calcUtxoFee(utxos []responses.Utxo, amount string, receiversCount int, feeC
 	ux.setMinimalRequirements()
 	ux.Input = ux.MinInputs - 1
 
+	var inputs []responses.Utxo
 	iterationBalance := ux.LastIterationBalance
 	for i := ux.MinInputs - 1; i < len(ux.UsefulUtxos)+len(ux.UselessUtxos); i++ {
+		inputs = append(inputs, utxos[i])
 		ux.Input++
 		iterationBalance += utxos[i].Satoshis
 		if iterationBalance > satoshiAmount {
@@ -108,6 +110,7 @@ func calcUtxoFee(utxos []responses.Utxo, amount string, receiversCount int, feeC
 		IsEnough:                ux.IsEnough,
 		IsBadFee:                ux.IsBadFee,
 	},
+		Inputs: inputs,
 		Input:  ux.Input,
 		Output: ux.Output,
 	}, responses.ResponseError{}
