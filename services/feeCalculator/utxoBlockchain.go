@@ -110,9 +110,10 @@ func calcUtxoFee(utxos []responses.Utxo, amount string, receiversCount int, feeC
 		IsEnough:                ux.IsEnough,
 		IsBadFee:                ux.IsBadFee,
 	},
-		Inputs: inputs,
-		Input:  ux.Input,
-		Output: ux.Output,
+		FeePerByte: feeCalculator.FeePerByte,
+		Inputs:     inputs,
+		Input:      ux.Input,
+		Output:     ux.Output,
 	}, responses.ResponseError{}
 }
 

@@ -18,9 +18,10 @@ type SharedApiResp struct {
 
 type GetFeeResponse struct {
 	*SharedApiResp
-	Inputs []responses.Utxo `json:"inputs"`
-	Input  int              `json:"input"`
-	Output int              `json:"output"`
+	FeePerByte int              `json:"feePerByte"`
+	Inputs     []responses.Utxo `json:"inputs"`
+	Input      int              `json:"input"`
+	Output     int              `json:"output"`
 }
 
 type GetEthFeeResponse struct {
