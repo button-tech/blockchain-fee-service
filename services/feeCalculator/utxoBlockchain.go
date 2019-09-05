@@ -20,6 +20,7 @@ type utxoBlockchain struct {
 	Fee                  int
 	MinInputs            int
 	Input                int
+	Inputs               []responses.Utxo
 	Output               int
 	LastIterationBalance int
 	UsefulUtxos          []responses.Utxo
@@ -53,10 +54,8 @@ func calcUtxoFee(utxos []responses.Utxo, amount string, receiversCount int, feeC
 	ux.setMinimalRequirements()
 	ux.Input = ux.MinInputs - 1
 
-	var inputs []responses.Utxo
 	iterationBalance := ux.LastIterationBalance
 	for i := ux.MinInputs - 1; i < len(ux.UsefulUtxos)+len(ux.UselessUtxos); i++ {
-		inputs = append(inputs, utxos[i])
 		ux.Input++
 		iterationBalance += utxos[i].Satoshis
 		if iterationBalance > satoshiAmount {
@@ -111,7 +110,7 @@ func calcUtxoFee(utxos []responses.Utxo, amount string, receiversCount int, feeC
 		IsBadFee:                ux.IsBadFee,
 	},
 		FeePerByte: feeCalculator.FeePerByte,
-		Inputs:     inputs,
+		Inputs:     ux.Inputs,
 		Input:      ux.Input,
 		Output:     ux.Output,
 	}, responses.ResponseError{}
@@ -166,6 +165,7 @@ func (ux *utxoBlockchain) setMinInputs() {
 	iterationBalance := 0
 	for _, utxo := range ux.AllUtxos {
 		ux.MinInputs++
+		ux.Inputs = append(ux.Inputs, utxo)
 		iterationBalance += utxo.Satoshis
 		if iterationBalance > ux.SatoshiAmount {
 			ux.LastIterationBalance = iterationBalance - utxo.Satoshis
