@@ -10,29 +10,23 @@ import (
 
 type utxoBlockchain struct {
 	AllUtxos             []responses.Utxo
-	TotalBalance         int
-	UsefulBalance        int
-	SatoshiAmount        int
+	SendingAmount        int
 	CalcFee              func(int, int, int) int
 	MinFeePerByte        int
 	FeePerByte           int
 	MinFee               int
-	Fee                  int
 	MinInputs            int
-	Input                int
-	Inputs               []responses.Utxo
-	Output               int
 	LastIterationBalance int
 	UsefulUtxos          []responses.Utxo
 	UselessUtxos         []responses.Utxo
 	DustUtxos            []responses.Utxo
 	MaxAmount            int
 	MaxUsefulAmount      int
-	IsBadFee             bool
-	IsEnough             bool
 }
 
 func calcUtxoFee(utxos []responses.Utxo, amount string, receiversCount int, feeCalculator feeCalculator) (dto.GetFeeResponse, responses.ResponseError) {
+	var result dto.GetFeeResponse
+
 	totalBalance := calcTotalBalance(utxos)
 	if totalBalance == 0 {
 		return dto.GetFeeResponse{}, responses.ResponseError{}
@@ -44,82 +38,80 @@ func calcUtxoFee(utxos []responses.Utxo, amount string, receiversCount int, feeC
 
 	ux := utxoBlockchain{
 		AllUtxos:      utxos,
-		TotalBalance:  totalBalance,
-		SatoshiAmount: satoshiAmount,
+		SendingAmount: satoshiAmount,
 		CalcFee:       feeCalculator.CalcFee,
 		FeePerByte:    feeCalculator.FeePerByte,
 		MinFeePerByte: feeCalculator.MinFeePerByte,
-		Output:        receiversCount,
 	}
 	ux.setMinimalRequirements()
-	ux.Input = ux.MinInputs - 1
 
+	result = dto.GetFeeResponse{SharedApiResp: &dto.SharedApiResp{
+		Balance:                 uint64(totalBalance),
+		MaxAmount:               uint64(ux.MaxAmount),
+		MaxAmountWithOptimalFee: uint64(ux.MaxUsefulAmount),
+	},
+		Inputs: []responses.Utxo{},
+		FeePerByte: feeCalculator.FeePerByte,
+	}
+	result.Input = ux.MinInputs - 1
+
+	if ux.SendingAmount == 0 || ux.SendingAmount >= totalBalance {
+		return result, responses.ResponseError{}
+	}
+
+	result.IsEnough = true
+	result.Output = receiversCount
 	iterationBalance := ux.LastIterationBalance
-	for i := ux.MinInputs - 1; i < len(ux.UsefulUtxos)+len(ux.UselessUtxos); i++ {
-		ux.Input++
+	maxIterations := len(ux.UsefulUtxos)+len(ux.UselessUtxos)
+
+	for i := ux.MinInputs - 1; i < maxIterations; i++ {
+		result.Input++
 		iterationBalance += utxos[i].Satoshis
-		if iterationBalance > satoshiAmount {
-			feeWithoutReturningOutput := ux.CalcFee(ux.Input, ux.Output, feeCalculator.FeePerByte)
-			fee := ux.CalcFee(ux.Input, ux.Output+1, feeCalculator.FeePerByte)
-			currentValueOneOutput := feeWithoutReturningOutput + satoshiAmount
-			currentValueTwoOutputs := fee + satoshiAmount
-			isEnoughForMinFee := iterationBalance-satoshiAmount >= ux.CalcFee(i+1, ux.Output, ux.MinFeePerByte)
-			con0 := iterationBalance < currentValueOneOutput
-			con1 := iterationBalance == currentValueOneOutput
-			con2 := iterationBalance > currentValueOneOutput && iterationBalance < currentValueTwoOutputs
-			con3 := iterationBalance >= currentValueTwoOutputs
-			if i > len(ux.UsefulUtxos)-1 && isEnoughForMinFee {
-				ux.Fee = iterationBalance - satoshiAmount
-				ux.Output = 1
-				ux.IsBadFee = true
-				ux.IsEnough = true
-				break
-			}
-			if con1 {
-				ux.Fee = feeWithoutReturningOutput
-				ux.IsEnough = true
-				break
-			} else if con2 {
-				ux.Fee = iterationBalance - satoshiAmount
-				ux.IsEnough = true
-				break
-			} else if con3 {
-				ux.Fee = fee
-				ux.Output = 2
-				if iterationBalance-currentValueTwoOutputs < ux.MinFee {
-					ux.Fee += iterationBalance - currentValueTwoOutputs
-					ux.Output = 1
-				}
-				ux.IsEnough = true
-				break
-			} else if con0 && i == len(utxos)-1 && isEnoughForMinFee {
-				ux.Fee = totalBalance - satoshiAmount
-				ux.Output = 1
-				ux.IsBadFee = true
-				ux.IsEnough = true
-			}
+
+		feeWithoutReturningOutput := ux.CalcFee(result.Input, result.Output, feeCalculator.FeePerByte)
+		fee := ux.CalcFee(result.Input, result.Output+1, feeCalculator.FeePerByte)
+
+		currentValueOneOutput := feeWithoutReturningOutput + ux.SendingAmount
+		currentValueTwoOutputs := fee + ux.SendingAmount
+
+		isEnoughForMinFee := iterationBalance-ux.SendingAmount >= ux.CalcFee(i+1, result.Output, ux.MinFeePerByte)
+
+		con0 := iterationBalance < currentValueOneOutput
+		con1 := iterationBalance == currentValueOneOutput
+		con2 := iterationBalance > currentValueOneOutput && iterationBalance < currentValueTwoOutputs
+		con3 := iterationBalance == currentValueTwoOutputs
+		con4 := iterationBalance > currentValueTwoOutputs
+
+		if con1 || con2 || con3 {
+			result.Output = 1
+			result.Fee = iterationBalance - ux.SendingAmount
+			break
+		} else if con4 {
+			result.Output = 2
+			result.Fee = fee
+			break
+		} else if (i > len(ux.UsefulUtxos)-1 && isEnoughForMinFee) || (con0 && i == maxIterations-1 && isEnoughForMinFee) {
+			result.Fee = iterationBalance - ux.SendingAmount
+			result.FeePerByte = ux.MinFeePerByte
+			result.Output = 1
+			result.IsBadFee = true
+			break
+		} else if i == maxIterations-1 && !isEnoughForMinFee {
+			result.IsEnough = false
+			result.Input = 0
+			break
 		}
 	}
 
-	return dto.GetFeeResponse{SharedApiResp: &dto.SharedApiResp{
-		Fee:                     ux.Fee,
-		Balance:                 uint64(ux.TotalBalance),
-		MaxAmount:               uint64(ux.MaxAmount),
-		MaxAmountWithOptimalFee: uint64(ux.MaxUsefulAmount),
-		IsEnough:                ux.IsEnough,
-		IsBadFee:                ux.IsBadFee,
-	},
-		FeePerByte: feeCalculator.FeePerByte,
-		Inputs:     ux.Inputs,
-		Input:      ux.Input,
-		Output:     ux.Output,
-	}, responses.ResponseError{}
+	result.Inputs = utxos[:result.Input]
+
+	return result, responses.ResponseError{}
 }
 
 func (ux *utxoBlockchain) setMinimalRequirements() {
 	ux.setMinFee()
-	ux.setMinInputs()
 	ux.setUtxos()
+	ux.setMinInputs()
 	ux.setMaxAmounts()
 }
 
@@ -128,12 +120,12 @@ func (ux *utxoBlockchain) setMaxAmounts() {
 	for _, utxo := range ux.UsefulUtxos {
 		workableBalance += utxo.Satoshis
 	}
-	ux.UsefulBalance = workableBalance
+	useFulBalance := workableBalance
 	for _, utxo := range ux.UselessUtxos {
 		workableBalance += utxo.Satoshis
 	}
 	if len(ux.UsefulUtxos) > 0 {
-		ux.MaxUsefulAmount = ux.UsefulBalance - ux.CalcFee(len(ux.UsefulUtxos), 1, ux.FeePerByte)
+		ux.MaxUsefulAmount = useFulBalance - ux.CalcFee(len(ux.UsefulUtxos), 1, ux.FeePerByte)
 	}
 	ux.MaxAmount = workableBalance - ux.CalcFee(len(ux.UsefulUtxos)+len(ux.UselessUtxos), 1, ux.MinFeePerByte)
 }
@@ -163,12 +155,13 @@ func (ux *utxoBlockchain) setDustUtxo() {
 
 func (ux *utxoBlockchain) setMinInputs() {
 	iterationBalance := 0
-	for _, utxo := range ux.AllUtxos {
+	utxos := append(ux.UsefulUtxos, ux.UselessUtxos...)
+	for i := 0; i < len(utxos); i++ {
+		iterationBalance += utxos[i].Satoshis
 		ux.MinInputs++
-		ux.Inputs = append(ux.Inputs, utxo)
-		iterationBalance += utxo.Satoshis
-		if iterationBalance > ux.SatoshiAmount {
-			ux.LastIterationBalance = iterationBalance - utxo.Satoshis
+
+		if iterationBalance > ux.SendingAmount {
+			ux.LastIterationBalance = iterationBalance - utxos[i].Satoshis
 			break
 		}
 	}
