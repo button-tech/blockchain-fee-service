@@ -38,3 +38,10 @@ func GetStellarBalance(address string) (responses.CurrencyBalanceResponse, respo
 	errors := call.response(&responseToClient)
 	return responseToClient, errors
 }
+
+func GetZilliqaBalance(address string) (responses.CurrencyBalanceResponse, responses.ResponseError) {
+	call := apiCall("GET", "https://node.buttonwallet.com", "/zilliqa/balance/"+address, nil)
+	var responseToClient responses.CurrencyBalanceResponse
+	errors := call.response(&responseToClient)
+	return responseToClient, errors
+}

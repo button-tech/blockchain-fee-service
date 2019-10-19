@@ -73,6 +73,70 @@ func CalculateEthBasedFee(balance string, gasPrice, gas int, amount string) (dto
 	return *fr, nil
 }
 
+func CalculateZilliqaFee(balance string, gasPrice, gas int, amount string) (dto.GetEthFeeResponse, error) {
+	wei := stringAmountToQ(amount)
+	bal, ok := StringToBigInt(balance)
+	if !ok {
+		return dto.GetEthFeeResponse{}, errors.CustomError("failed to parse String to big.Int")
+	}
+
+	bigBalance := bal
+
+	fr := &dto.GetEthFeeResponse{SharedApiResp: &dto.SharedApiResp{
+		Balance: bal.Uint64(),
+	}, SharedEthBasedResp: &dto.SharedEthBasedResp{}}
+
+	bigOptimalGasPrice := IntToBigInt(gasPrice)
+	bigGas := IntToBigInt(gas)
+
+	fr.GasPrice = bigOptimalGasPrice.Uint64()
+	fr.Gas = bigGas.Uint64()
+
+	defaultFee := Mul(bigOptimalGasPrice, bigGas)
+	optimalFee := Mul(bigOptimalGasPrice, bigGas)
+
+	if bigBalance.Cmp(wei) < 0 {
+		fr.Fee = int(defaultFee.Int64())
+		fr.Gas = bigOptimalGasPrice.Uint64()
+		fr.GasPrice = bigOptimalGasPrice.Uint64()
+		return *fr, nil
+	}
+
+	defaultSendingAmount := Add(wei, defaultFee)
+	optimalSendingAmount := Add(wei, optimalFee)
+
+	con1 := bigBalance.Cmp(defaultSendingAmount) < 0
+	con2 := bigBalance.Cmp(defaultSendingAmount) >= 0 && bigBalance.Cmp(optimalSendingAmount) < 0
+	con3 := bigBalance.Cmp(optimalSendingAmount) >= 0
+
+	maxAmount := Sub(bigBalance, defaultFee).Uint64()
+	maxAmountWithOptimalFee := Sub(bigBalance, optimalFee).Uint64()
+
+	if maxAmount > 0 {
+		fr.MaxAmount = maxAmount
+	}
+
+	if maxAmountWithOptimalFee > 0 {
+		fr.MaxAmountWithOptimalFee = maxAmountWithOptimalFee
+	}
+
+	if con1 {
+		fr.Fee = int(defaultFee.Int64())
+		fr.MaxAmount = 0
+		fr.MaxAmountWithOptimalFee = 0
+	} else if con2 {
+		fr.Fee = int(defaultFee.Int64())
+		fr.IsEnough = true
+		fr.IsBadFee = true
+	} else if con3 {
+		fr.Fee = int(optimalFee.Int64())
+		fr.IsEnough = true
+		fr.GasPrice = bigOptimalGasPrice.Uint64()
+	}
+
+	return *fr, nil
+}
+
 func CalculateTokenFee(ethBalance, tokenBalance string, gasPrice, gas int, amount string) (dto.GetTokenFeeResponse, error) {
 	ethBal, ok := StringToBigInt(ethBalance)
 	if !ok {
@@ -109,6 +173,14 @@ func CalculateTokenFee(ethBalance, tokenBalance string, gasPrice, gas int, amoun
 func stringAmountToWei(amount string) *big.Int {
 	bigA, _ := new(big.Float).SetString(amount)
 	multiplier := new(big.Float).SetFloat64(math.Pow(10, 18))
+	bigA.Mul(bigA, multiplier)
+	i, _ := bigA.Int64()
+	return new(big.Int).SetInt64(i)
+}
+
+func stringAmountToQ(amount string) *big.Int {
+	bigA, _ := new(big.Float).SetString(amount)
+	multiplier := new(big.Float).SetFloat64(math.Pow(10, 12))
 	bigA.Mul(bigA, multiplier)
 	i, _ := bigA.Int64()
 	return new(big.Int).SetInt64(i)

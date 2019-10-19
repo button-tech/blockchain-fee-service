@@ -259,6 +259,31 @@ func GetStellarFee(address string, amount string) (dto.GetWavesAndStellarFeeResp
 	return fr, responses.ResponseError{}, nil
 }
 
+func GetZilliqaFee(address string, amount string) (dto.GetEthFeeResponse, responses.ResponseError, error) {
+
+	var balanceErr responses.ResponseError
+	var balance responses.CurrencyBalanceResponse
+
+	var wg sync.WaitGroup
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		balance, balanceErr = api.GetZilliqaBalance(address)
+	}()
+	wg.Wait()
+
+	if balanceErr.Error != nil || balanceErr.ApiError != nil {
+		return dto.GetEthFeeResponse{}, balanceErr, nil
+	}
+
+	fr, err := CalculateZilliqaFee(balance.Balance, 2000000000, 1, amount)
+	if err != nil {
+		return dto.GetEthFeeResponse{}, responses.ResponseError{}, err
+	}
+	return fr, responses.ResponseError{}, nil
+}
+
 func calcBitcoinFee(inputCount, outputCount, feePerByte int) int {
 	return (inputCount*148 + outputCount*34 + 10) * feePerByte
 }

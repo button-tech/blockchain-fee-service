@@ -29,6 +29,7 @@ func RunServer(R *gin.Engine) error {
 			api.POST("/token", handlers.GetTokenFee)
 			api.POST("/waves", handlers.GetWavesFee)
 			api.POST("/stellar", handlers.GetStellarFee)
+			api.POST("/zilliqa", handlers.GetZilliqaFee)
 		}
 	}
 

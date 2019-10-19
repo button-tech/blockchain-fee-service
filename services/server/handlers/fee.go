@@ -162,6 +162,24 @@ func GetStellarFee(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
+func GetZilliqaFee(c *gin.Context) {
+	var body dto.GetFeeRequest
+
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.JSON(http.StatusBadRequest, errors.BadRequestMessage)
+		return
+	}
+
+	res, apiErr, err := feeCalculator.GetZilliqaFee(body.FromAddress, body.Amount)
+	isErr, statusCode, error := ErrorCheck(err, apiErr)
+	if isErr {
+		c.JSON(statusCode, error)
+		return
+	}
+
+	c.JSON(http.StatusOK, res)
+}
+
 func ErrorCheck(err error, apiError responses.ResponseError) (bool, int, errors.ApiError) {
 	if ok, statusCode, message := handleError(err); ok {
 		return true, statusCode, message

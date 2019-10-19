@@ -50,7 +50,7 @@ func calcUtxoFee(utxos []responses.Utxo, amount string, receiversCount int, feeC
 		MaxAmount:               uint64(ux.MaxAmount),
 		MaxAmountWithOptimalFee: uint64(ux.MaxUsefulAmount),
 	},
-		Inputs: []responses.Utxo{},
+		Inputs:     []responses.Utxo{},
 		FeePerByte: feeCalculator.FeePerByte,
 	}
 	result.Input = ux.MinInputs - 1
@@ -62,7 +62,7 @@ func calcUtxoFee(utxos []responses.Utxo, amount string, receiversCount int, feeC
 	result.IsEnough = true
 	result.Output = receiversCount
 	iterationBalance := ux.LastIterationBalance
-	maxIterations := len(ux.UsefulUtxos)+len(ux.UselessUtxos)
+	maxIterations := len(ux.UsefulUtxos) + len(ux.UselessUtxos)
 
 	for i := ux.MinInputs - 1; i < maxIterations; i++ {
 		result.Input++
