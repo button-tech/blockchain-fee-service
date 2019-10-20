@@ -8,18 +8,18 @@ import (
 	"sync"
 )
 
-type feeCalculator struct {
-	CalcFee       func(int, int, int) int
-	MinFeePerByte int
-	FeePerByte    int
-}
-
 type Params struct {
 	Address string
 	Amount string
 	ReceiversCount int
 	Speed string
 	TokenAddress string
+}
+
+type feeCalculator struct {
+	CalcFee       func(int, int, int) int
+	MinFeePerByte int
+	FeePerByte    int
 }
 
 func GetBitcoinFee(params *Params) (dto.GetFeeResponse, responses.ResponseError, error) {
@@ -48,21 +48,9 @@ func GetBitcoinFee(params *Params) (dto.GetFeeResponse, responses.ResponseError,
 		return dto.GetFeeResponse{}, apiUtxoErr, nil
 	}
 	
-	f, _ := speedControl(feePerByte, params.Speed)
-	// todo : complete
-	f.MinFeePerByte = 10
+	feeCounted, _ := speedControl(feePerByte, params.Speed)
 
-	// Test
-	//switch params.Speed {
-	//case "1":
-	//	f.FeePerByte = feePerByte.HourFee
-	//case "1.5":
-	//	f.FeePerByte = feePerByte.HalfHourFee
-	//case "2":
-	//	f.FeePerByte = feePerByte.FastestFee
-	//}
-
-	fee, apiErr := calcUtxoFee(utxos.Utxo, params.Amount, params.ReceiversCount, *f)
+	fee, apiErr := calcUtxoFee(utxos.Utxo, params.Amount, params.ReceiversCount, *feeCounted)
 	if apiErr.Error != nil || apiErr.ApiError != nil {
 		return dto.GetFeeResponse{}, apiErr, nil
 	}
@@ -96,11 +84,11 @@ func GetLitecoinFee(params *Params) (dto.GetFeeResponse, responses.ResponseError
 		return dto.GetFeeResponse{}, apiUtxoErr, nil
 	}
 
-	f, _ := speedControl(feePerByte, params.Speed)
+	feeCounted, _ := speedControl(feePerByte, params.Speed)
 	// todo : complete
-	f.MinFeePerByte = 8
+	feeCounted.MinFeePerByte = 8
 
-	fee, apiErr := calcUtxoFee(utxos.Utxo, params.Amount, params.ReceiversCount, *f)
+	fee, apiErr := calcUtxoFee(utxos.Utxo, params.Amount, params.ReceiversCount, *feeCounted)
 	if apiErr.Error != nil || apiErr.ApiError != nil {
 		return dto.GetFeeResponse{}, apiErr, nil
 	}
@@ -149,9 +137,9 @@ func GetEthereumFee(params *Params) (dto.GetEthFeeResponse, responses.ResponseEr
 		return dto.GetEthFeeResponse{}, balanceErr, nil
 	}
 
-	_, gaz := speedControl(fee, params.Speed)
+	_, gasPrice := speedControl(fee, params.Speed)
 
-	fr, err := CalculateEthBasedFee(balance.Balance, gaz, 21000, params.Amount)
+	fr, err := CalculateEthBasedFee(balance.Balance, gasPrice, 21000, params.Amount)
 	if err != nil {
 		return dto.GetEthFeeResponse{}, responses.ResponseError{}, err
 	}
@@ -183,9 +171,9 @@ func GetEthereumClassicFee(params *Params) (dto.GetEthFeeResponse, responses.Res
 		return dto.GetEthFeeResponse{}, balanceErr, nil
 	}
 
-	_, gaz := speedControl(fee, params.Speed)
+	_, gasPrice := speedControl(fee, params.Speed)
 
-	fr, err := CalculateEthBasedFee(balance.Balance, gaz, 21000, params.Amount)
+	fr, err := CalculateEthBasedFee(balance.Balance, gasPrice, 21000, params.Amount)
 	if err != nil {
 		return dto.GetEthFeeResponse{}, responses.ResponseError{}, err
 	}
@@ -242,9 +230,9 @@ func GetTokenFee(params *Params) (dto.GetTokenFeeResponse, responses.ResponseErr
 		return dto.GetTokenFeeResponse{}, tokenBalanceErr, nil
 	}
 
-	_, gaz := speedControl(fee, params.Speed)
+	_, gasPrice := speedControl(fee, params.Speed)
 
-	fr, err := CalculateTokenFee(balance.Balance, tokenBalance.Balance, gaz, gasLimit.GasLimit, params.Amount)
+	fr, err := CalculateTokenFee(balance.Balance, tokenBalance.Balance, gasPrice, gasLimit.GasLimit, params.Amount)
 	if err != nil {
 		return dto.GetTokenFeeResponse{}, responses.ResponseError{}, err
 	}
@@ -296,57 +284,74 @@ func calcBitcoinCashFee(inputCount, outputCount, feePerByte int) int {
 }
 
 func speedControl(t interface{}, speed string) (*feeCalculator, int) {
-	var f feeCalculator
-	var gaz int
+	var (
+		f feeCalculator
+		gasPrice int
+	)
 
 	switch t.(type) {
 	case responses.BitcoinFeeResponse:
 		typed := t.(responses.BitcoinFeeResponse)
 		f.CalcFee = calcBitcoinFee
 		switch speed {
-		case "1":
+		case "slow":
 			f.FeePerByte = typed.HourFee
-		case "1.5":
+		case "average":
 			f.FeePerByte = typed.HalfHourFee
-		case "2":
+		case "fast":
 			f.FeePerByte = typed.FastestFee
+		default:
+			f.FeePerByte = typed.HourFee
 		}
-		return &f, 0
+		if f.FeePerByte <= 10 {
+			f.MinFeePerByte = f	.FeePerByte - 1
+		} else {
+			f.MinFeePerByte = 10
+		}
 	case responses.LitecoinFeeResponse:
 		typed := t.(responses.LitecoinFeeResponse)
 		f.CalcFee = calcLitecoinFee
 		switch speed {
-		case "1":
+		case "slow":
 			f.FeePerByte = typed.LowFeePerKb
-		case "1.5":
+		case "average":
 			f.FeePerByte = typed.MediumFeePerKb
-		case "2":
+		case "fast":
 			f.FeePerByte = typed.HighFeePerKb
+		default:
+			f.FeePerByte = typed.MediumFeePerKb
 		}
 		f.FeePerByte = f.FeePerByte / 1024
-		return &f, 0
+		if f.FeePerByte <= 8 {
+			f.MinFeePerByte = f	.FeePerByte - 1
+		} else {
+			f.MinFeePerByte = 8
+		}
 	case responses.EthereumFeeResponse:
 		typed := t.(responses.EthereumFeeResponse)
 		switch speed {
-		case "1":
-			gaz = typed.GasPrice * 10 / 8
-		case "1.5":
-			gaz = typed.GasPrice
-		case "2":
-			gaz = typed.GasPrice + (typed.GasPrice * 10 / 5)
+		case "slow":
+			gasPrice = typed.GasPrice * 10 / 8
+		case "average":
+			gasPrice = typed.GasPrice
+		case "fast":
+			gasPrice = typed.GasPrice + (typed.GasPrice * 10 / 5)
+		default:
+			gasPrice = typed.GasPrice
 		}
-		return nil, gaz
 	case responses.TokenFeeResponse:
 		typed := t.(responses.TokenFeeResponse)
 		switch speed {
-		case "1":
-			gaz = typed.GasLimit * 10 / 8
-		case "1.5":
-			gaz = typed.GasLimit
-		case "2":
-			gaz = typed.GasLimit + (typed.GasLimit * 10 / 5)
+		case "slow":
+			gasPrice = typed.GasLimit * 10 / 8
+		case "average":
+			gasPrice = typed.GasLimit
+		case "fast":
+			gasPrice = typed.GasLimit + (typed.GasLimit * 10 / 5)
+		default:
+			gasPrice = typed.GasLimit
 		}
-		return nil, gaz
 	}
-	return &f, gaz
+
+	return &f, gasPrice
 }

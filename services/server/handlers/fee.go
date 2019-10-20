@@ -18,7 +18,13 @@ func GetBitcoinFee(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, errors.BadRequestMessage)
 		return
 	}
-	params := paramsProcessing(body.ReceiversCount, body.FromAddress, body.Amount, body.Speed, "")
+	params := paramsProcessing(feeCalculator.Params{
+		Address:        body.FromAddress,
+		Amount:         body.Amount,
+		ReceiversCount: body.ReceiversCount,
+		Speed:          body.Speed,
+		TokenAddress:   "",
+	})
 
 	res, apiErr, err := feeCalculator.GetBitcoinFee(params)
 
@@ -40,7 +46,13 @@ func GetLitecoinFee(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, errors.BadRequestMessage)
 		return
 	}
-	params := paramsProcessing(body.ReceiversCount, body.FromAddress, body.Amount, body.Speed, "")
+	params := paramsProcessing(feeCalculator.Params{
+		Address:        body.FromAddress,
+		Amount:         body.Amount,
+		ReceiversCount: body.ReceiversCount,
+		Speed:          body.Speed,
+		TokenAddress:   "",
+	})
 
 	res, apiErr, err := feeCalculator.GetLitecoinFee(params)
 	isErr, statusCode, error := ErrorCheck(err, apiErr)
@@ -61,7 +73,13 @@ func GetBitcoinCashFee(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, errors.BadRequestMessage)
 		return
 	}
-	params := paramsProcessing(body.ReceiversCount, body.FromAddress, body.Amount, body.Speed, "")
+	params := paramsProcessing(feeCalculator.Params{
+		Address:        body.FromAddress,
+		Amount:         body.Amount,
+		ReceiversCount: body.ReceiversCount,
+		Speed:          body.Speed,
+		TokenAddress:   "",
+	})
 
 	res, apiErr, err := feeCalculator.GetBitcoinCashFee(params)
 	isErr, statusCode, error := ErrorCheck(err, apiErr)
@@ -79,7 +97,13 @@ func GetEthereumFee(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, errors.BadRequestMessage)
 		return
 	}
-	params := paramsProcessing(body.ReceiversCount, body.FromAddress, body.Amount, body.Speed, "")
+	params := paramsProcessing(feeCalculator.Params{
+		Address:        body.FromAddress,
+		Amount:         body.Amount,
+		ReceiversCount: body.ReceiversCount,
+		Speed:          body.Speed,
+		TokenAddress:   "",
+	})
 
 	res, apiErr, err := feeCalculator.GetEthereumFee(params)
 	isErr, statusCode, error := ErrorCheck(err, apiErr)
@@ -98,8 +122,13 @@ func GetTokenFee(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, errors.BadRequestMessage)
 		return
 	}
-
-	params := paramsProcessing(0, body.FromAddress, body.Amount, body.Speed, body.TokenAddress)
+	params := paramsProcessing(feeCalculator.Params{
+		Address:        body.FromAddress,
+		Amount:         body.Amount,
+		ReceiversCount: 0,
+		Speed:          body.Speed,
+		TokenAddress:   body.TokenAddress,
+	})
 
 	res, apiErr, err := feeCalculator.GetTokenFee(params)
 
@@ -119,7 +148,13 @@ func GetEthereumClassicFee(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, errors.BadRequestMessage)
 		return
 	}
-	params := paramsProcessing(body.ReceiversCount, body.FromAddress, body.Amount, body.Speed, "")
+	params := paramsProcessing(feeCalculator.Params{
+		Address:        body.FromAddress,
+		Amount:         body.Amount,
+		ReceiversCount: body.ReceiversCount,
+		Speed:          body.Speed,
+		TokenAddress:   "",
+	})
 
 	res, apiErr, err := feeCalculator.GetEthereumClassicFee(params)
 
@@ -139,7 +174,13 @@ func GetWavesFee(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, errors.BadRequestMessage)
 		return
 	}
-	params := paramsProcessing(body.ReceiversCount, body.FromAddress, body.Amount, body.Speed, "")
+	params := paramsProcessing(feeCalculator.Params{
+		Address:        body.FromAddress,
+		Amount:         body.Amount,
+		ReceiversCount: body.ReceiversCount,
+		Speed:          body.Speed,
+		TokenAddress:   "",
+	})
 
 	res, apiErr, err := feeCalculator.GetWavesFee(params)
 	isErr, statusCode, error := ErrorCheck(err, apiErr)
@@ -158,7 +199,13 @@ func GetStellarFee(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, errors.BadRequestMessage)
 		return
 	}
-	params := paramsProcessing(body.ReceiversCount, body.FromAddress, body.Amount, body.Speed, "")
+	params := paramsProcessing(feeCalculator.Params{
+		Address:        body.FromAddress,
+		Amount:         body.Amount,
+		ReceiversCount: body.ReceiversCount,
+		Speed:          body.Speed,
+		TokenAddress:   "",
+	})
 
 	res, apiErr, err := feeCalculator.GetStellarFee(params)
 
@@ -171,7 +218,6 @@ func GetStellarFee(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
-
 func ErrorCheck(err error, apiError responses.ResponseError) (bool, int, errors.ApiError) {
 	if ok, statusCode, message := handleError(err); ok {
 		return true, statusCode, message
@@ -181,17 +227,9 @@ func ErrorCheck(err error, apiError responses.ResponseError) (bool, int, errors.
 	return false, 0, errors.ApiError{}
 }
 
-func paramsProcessing(i int, address, amount, speed, tokenAddress string) *feeCalculator.Params {
-	var p feeCalculator.Params
-	if speed != "" {
-		p.Speed = speed
-	} else {
-		p.Speed = "1.5"
+func paramsProcessing(params feeCalculator.Params) *feeCalculator.Params {
+	if params.Speed != "low" && params.Speed != "average" && params.Speed != "fast" || params.Speed == "" {
+		params.Speed = "average"
 	}
-	p.TokenAddress = tokenAddress
-	p.Address = address
-	p.ReceiversCount = i
-	p.Amount = amount
-
-	return &p
+	return &params
 }
