@@ -9,11 +9,11 @@ import (
 )
 
 type Params struct {
-	Address string
-	Amount string
+	Address        string
+	Amount         string
 	ReceiversCount int
-	Speed string
-	TokenAddress string
+	Speed          string
+	TokenAddress   string
 }
 
 type feeCalculator struct {
@@ -47,7 +47,7 @@ func GetBitcoinFee(params *Params) (dto.GetFeeResponse, responses.ResponseError,
 	} else if apiUtxoErr.Error != nil || apiUtxoErr.ApiError != nil {
 		return dto.GetFeeResponse{}, apiUtxoErr, nil
 	}
-	
+
 	feeCounted, _ := speedControl(feePerByte, params.Speed)
 
 	fee, apiErr := calcUtxoFee(utxos.Utxo, params.Amount, params.ReceiversCount, *feeCounted)
@@ -285,7 +285,7 @@ func calcBitcoinCashFee(inputCount, outputCount, feePerByte int) int {
 
 func speedControl(t interface{}, speed string) (*feeCalculator, int) {
 	var (
-		f feeCalculator
+		f        feeCalculator
 		gasPrice int
 	)
 
@@ -304,7 +304,7 @@ func speedControl(t interface{}, speed string) (*feeCalculator, int) {
 			f.FeePerByte = typed.HourFee
 		}
 		if f.FeePerByte <= 10 {
-			f.MinFeePerByte = f	.FeePerByte - 1
+			f.MinFeePerByte = f.FeePerByte - 1
 		} else {
 			f.MinFeePerByte = 10
 		}
@@ -323,7 +323,7 @@ func speedControl(t interface{}, speed string) (*feeCalculator, int) {
 		}
 		f.FeePerByte = f.FeePerByte / 1024
 		if f.FeePerByte <= 8 {
-			f.MinFeePerByte = f	.FeePerByte - 1
+			f.MinFeePerByte = f.FeePerByte - 1
 		} else {
 			f.MinFeePerByte = 8
 		}

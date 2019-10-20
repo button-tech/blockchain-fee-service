@@ -7,12 +7,12 @@ type SharedApiReq struct {
 
 type GetFeeRequest struct {
 	*SharedApiReq
-	ReceiversCount int `json:"receiversCount"`
-	Speed       string `json:"speed,omitempty"`
+	ReceiversCount int    `json:"receiversCount"`
+	Speed          string `json:"speed,omitempty"`
 }
 
 type GetTokenFeeRequest struct {
 	*SharedApiReq
 	TokenAddress string `json:"tokenAddress"`
-	Speed       string `json:"speed,omitempty"`
+	Speed        string `json:"speed,omitempty"`
 }
