@@ -339,18 +339,6 @@ func speedControl(t interface{}, speed string) (*feeCalculator, int) {
 		default:
 			gasPrice = typed.GasPrice
 		}
-	case responses.TokenFeeResponse:
-		typed := t.(responses.TokenFeeResponse)
-		switch speed {
-		case "slow":
-			gasPrice = typed.GasLimit * 10 / 8
-		case "average":
-			gasPrice = typed.GasLimit
-		case "fast":
-			gasPrice = typed.GasLimit + (typed.GasLimit * 10 / 5)
-		default:
-			gasPrice = typed.GasLimit
-		}
 	}
 
 	return &f, gasPrice
