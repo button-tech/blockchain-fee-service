@@ -1,1 +1,1 @@
-docker build -t $acc/blockchain-fee-service .
+docker build -t $acc/blockchain-fee-service:new .

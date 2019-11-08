@@ -6,7 +6,10 @@ import (
 	"github.com/imroc/req"
 	"log"
 	"net/http"
+	"os"
 )
+
+var nodeUrl = os.Getenv("NODE_URL")
 
 type apiResponse struct {
 	Result   interface{} `json:"result"`

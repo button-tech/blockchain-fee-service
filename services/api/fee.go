@@ -20,21 +20,21 @@ func GetLitecoinFee() (responses.LitecoinFeeResponse, responses.ResponseError) {
 }
 
 func GetEthereumFee() (responses.EthereumFeeResponse, responses.ResponseError) {
-	call := apiCall("GET", "https://node.buttonwallet.com", "/eth/gasPrice", nil)
+	call := apiCall("GET", nodeUrl, "/eth/gasPrice", nil)
 	var responseToClient responses.EthereumFeeResponse
 	errors := call.response(&responseToClient)
 	return responseToClient, errors
 }
 
 func GetEthereumClassicFee() (responses.EthereumFeeResponse, responses.ResponseError) {
-	call := apiCall("GET", "https://node.buttonwallet.com", "/etc/gasPrice", nil)
+	call := apiCall("GET", nodeUrl, "/etc/gasPrice", nil)
 	var responseToClient responses.EthereumFeeResponse
 	errors := call.response(&responseToClient)
 	return responseToClient, errors
 }
 
 func GetTokenGasLimit(data requests.TokenGasLimitRequest) (responses.TokenFeeResponse, responses.ResponseError) {
-	call := apiCall("POST", "https://node.buttonwallet.com", "/eth/estimateGas", data)
+	call := apiCall("POST", nodeUrl, "/eth/estimateGas", data)
 	var responseToClient responses.TokenFeeResponse
 	errors := call.response(&responseToClient)
 	return responseToClient, errors
