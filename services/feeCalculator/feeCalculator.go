@@ -8,13 +8,21 @@ import (
 	"sync"
 )
 
+type Params struct {
+	Address        string
+	Amount         string
+	ReceiversCount int
+	Speed          string
+	TokenAddress   string
+}
+
 type feeCalculator struct {
 	CalcFee       func(int, int, int) int
 	MinFeePerByte int
 	FeePerByte    int
 }
 
-func GetBitcoinFee(address string, amount string, receiversCount int) (dto.GetFeeResponse, responses.ResponseError, error) {
+func GetBitcoinFee(params *Params) (dto.GetFeeResponse, responses.ResponseError, error) {
 
 	var utxos responses.UtxoResponse
 	var apiUtxoErr, apiFeeErr responses.ResponseError
@@ -25,7 +33,7 @@ func GetBitcoinFee(address string, amount string, receiversCount int) (dto.GetFe
 	wg.Add(2)
 	go func() {
 		defer wg.Done()
-		utxos, apiUtxoErr = api.GetUtxo(address, "btc")
+		utxos, apiUtxoErr = api.GetUtxo(params.Address, "btc")
 	}()
 
 	go func() {
@@ -40,11 +48,9 @@ func GetBitcoinFee(address string, amount string, receiversCount int) (dto.GetFe
 		return dto.GetFeeResponse{}, apiUtxoErr, nil
 	}
 
-	fee, apiErr := calcUtxoFee(utxos.Utxo, amount, receiversCount, feeCalculator{
-		CalcFee:       calcBitcoinFee,
-		MinFeePerByte: 10,
-		FeePerByte:    feePerByte.HalfHourFee,
-	})
+	feeCounted, _ := speedControl(feePerByte, params.Speed)
+
+	fee, apiErr := calcUtxoFee(utxos.Utxo, params.Amount, params.ReceiversCount, *feeCounted)
 	if apiErr.Error != nil || apiErr.ApiError != nil {
 		return dto.GetFeeResponse{}, apiErr, nil
 	}
@@ -52,7 +58,7 @@ func GetBitcoinFee(address string, amount string, receiversCount int) (dto.GetFe
 	return fee, responses.ResponseError{}, nil
 }
 
-func GetLitecoinFee(address string, amount string, receiversCount int) (dto.GetFeeResponse, responses.ResponseError, error) {
+func GetLitecoinFee(params *Params) (dto.GetFeeResponse, responses.ResponseError, error) {
 
 	var utxos responses.UtxoResponse
 	var apiUtxoErr, apiFeeErr responses.ResponseError
@@ -63,7 +69,7 @@ func GetLitecoinFee(address string, amount string, receiversCount int) (dto.GetF
 	wg.Add(2)
 	go func() {
 		defer wg.Done()
-		utxos, apiUtxoErr = api.GetUtxo(address, "ltc")
+		utxos, apiUtxoErr = api.GetUtxo(params.Address, "ltc")
 	}()
 
 	go func() {
@@ -78,23 +84,23 @@ func GetLitecoinFee(address string, amount string, receiversCount int) (dto.GetF
 		return dto.GetFeeResponse{}, apiUtxoErr, nil
 	}
 
-	fee, apiErr := calcUtxoFee(utxos.Utxo, amount, receiversCount, feeCalculator{
-		CalcFee:       calcLitecoinFee,
-		MinFeePerByte: 8,
-		FeePerByte:    feePerByte.MediumFeePerKb / 1024,
-	})
+	feeCounted, _ := speedControl(feePerByte, params.Speed)
+	// todo : complete
+	feeCounted.MinFeePerByte = 8
+
+	fee, apiErr := calcUtxoFee(utxos.Utxo, params.Amount, params.ReceiversCount, *feeCounted)
 	if apiErr.Error != nil || apiErr.ApiError != nil {
 		return dto.GetFeeResponse{}, apiErr, nil
 	}
 	return fee, responses.ResponseError{}, nil
 }
 
-func GetBitcoinCashFee(address string, amount string, receiversCount int) (dto.GetFeeResponse, responses.ResponseError, error) {
-	utxos, apiErr := api.GetUtxo(address, "bch")
+func GetBitcoinCashFee(params *Params) (dto.GetFeeResponse, responses.ResponseError, error) {
+	utxos, apiErr := api.GetUtxo(params.Address, "bch")
 	if apiErr.Error != nil || apiErr.ApiError != nil {
 		return dto.GetFeeResponse{}, apiErr, nil
 	}
-	fee, apiErr := calcUtxoFee(utxos.Utxo, amount, receiversCount, feeCalculator{
+	fee, apiErr := calcUtxoFee(utxos.Utxo, params.Amount, params.ReceiversCount, feeCalculator{
 		CalcFee:       calcBitcoinCashFee,
 		MinFeePerByte: 1,
 		FeePerByte:    3,
@@ -105,7 +111,7 @@ func GetBitcoinCashFee(address string, amount string, receiversCount int) (dto.G
 	return fee, responses.ResponseError{}, nil
 }
 
-func GetEthereumFee(address string, amount string) (dto.GetEthFeeResponse, responses.ResponseError, error) {
+func GetEthereumFee(params *Params) (dto.GetEthFeeResponse, responses.ResponseError, error) {
 
 	var fee responses.EthereumFeeResponse
 	var feeErr, balanceErr responses.ResponseError
@@ -121,7 +127,7 @@ func GetEthereumFee(address string, amount string) (dto.GetEthFeeResponse, respo
 
 	go func() {
 		defer wg.Done()
-		balance, balanceErr = api.GetEthereumBalance(address)
+		balance, balanceErr = api.GetEthereumBalance(params.Address)
 	}()
 	wg.Wait()
 
@@ -131,14 +137,16 @@ func GetEthereumFee(address string, amount string) (dto.GetEthFeeResponse, respo
 		return dto.GetEthFeeResponse{}, balanceErr, nil
 	}
 
-	fr, err := CalculateEthBasedFee(balance.Balance, fee.GasPrice, 21000, amount)
+	_, gasPrice := speedControl(fee, params.Speed)
+
+	fr, err := CalculateEthBasedFee(balance.Balance, gasPrice, 21000, params.Amount)
 	if err != nil {
 		return dto.GetEthFeeResponse{}, responses.ResponseError{}, err
 	}
 	return fr, responses.ResponseError{}, nil
 }
 
-func GetEthereumClassicFee(address string, amount string) (dto.GetEthFeeResponse, responses.ResponseError, error) {
+func GetEthereumClassicFee(params *Params) (dto.GetEthFeeResponse, responses.ResponseError, error) {
 	var fee responses.EthereumFeeResponse
 	var feeErr, balanceErr responses.ResponseError
 	var balance responses.CurrencyBalanceResponse
@@ -153,7 +161,7 @@ func GetEthereumClassicFee(address string, amount string) (dto.GetEthFeeResponse
 
 	go func() {
 		defer wg.Done()
-		balance, balanceErr = api.GetEthereumClassicBalance(address)
+		balance, balanceErr = api.GetEthereumClassicBalance(params.Address)
 	}()
 	wg.Wait()
 
@@ -163,14 +171,16 @@ func GetEthereumClassicFee(address string, amount string) (dto.GetEthFeeResponse
 		return dto.GetEthFeeResponse{}, balanceErr, nil
 	}
 
-	fr, err := CalculateEthBasedFee(balance.Balance, fee.GasPrice, 21000, amount)
+	_, gasPrice := speedControl(fee, params.Speed)
+
+	fr, err := CalculateEthBasedFee(balance.Balance, gasPrice, 21000, params.Amount)
 	if err != nil {
 		return dto.GetEthFeeResponse{}, responses.ResponseError{}, err
 	}
 	return fr, responses.ResponseError{}, nil
 }
 
-func GetTokenFee(address, tokenAddress, amount string) (dto.GetTokenFeeResponse, responses.ResponseError, error) {
+func GetTokenFee(params *Params) (dto.GetTokenFeeResponse, responses.ResponseError, error) {
 	var gasLimitErr, feeErr, balanceErr, tokenBalanceErr responses.ResponseError
 	var gasLimit responses.TokenFeeResponse
 	var fee responses.EthereumFeeResponse
@@ -182,9 +192,9 @@ func GetTokenFee(address, tokenAddress, amount string) (dto.GetTokenFeeResponse,
 	go func() {
 		defer wg.Done()
 		gasLimit, gasLimitErr = api.GetTokenGasLimit(requests.TokenGasLimitRequest{
-			TokenAddress: tokenAddress,
-			ToAddress:    address,
-			Amount:       amount,
+			TokenAddress: params.TokenAddress,
+			ToAddress:    params.Address,
+			Amount:       params.Amount,
 		})
 	}()
 
@@ -195,12 +205,12 @@ func GetTokenFee(address, tokenAddress, amount string) (dto.GetTokenFeeResponse,
 
 	go func() {
 		defer wg.Done()
-		balance, balanceErr = api.GetEthereumBalance(address)
+		balance, balanceErr = api.GetEthereumBalance(params.Address)
 	}()
 
 	go func() {
 		defer wg.Done()
-		tokenBalance, tokenBalanceErr = api.GetTokenBalance(address, tokenAddress)
+		tokenBalance, tokenBalanceErr = api.GetTokenBalance(params.Address, params.TokenAddress)
 		if tokenBalance.Balance == "" {
 			tokenBalance.Balance = "0"
 		}
@@ -220,21 +230,23 @@ func GetTokenFee(address, tokenAddress, amount string) (dto.GetTokenFeeResponse,
 		return dto.GetTokenFeeResponse{}, tokenBalanceErr, nil
 	}
 
-	fr, err := CalculateTokenFee(balance.Balance, tokenBalance.Balance, fee.GasPrice, gasLimit.GasLimit, amount)
+	_, gasPrice := speedControl(fee, params.Speed)
+
+	fr, err := CalculateTokenFee(balance.Balance, tokenBalance.Balance, gasPrice, gasLimit.GasLimit, params.Amount)
 	if err != nil {
 		return dto.GetTokenFeeResponse{}, responses.ResponseError{}, err
 	}
 	return fr, responses.ResponseError{}, nil
 }
 
-func GetWavesFee(address string, amount string) (dto.GetWavesAndStellarFeeResponse, responses.ResponseError, error) {
-	balance, apiErr := api.GetWavesBalance(address)
+func GetWavesFee(params *Params) (dto.GetWavesAndStellarFeeResponse, responses.ResponseError, error) {
+	balance, apiErr := api.GetWavesBalance(params.Address)
 	if apiErr.Error != nil || apiErr.ApiError != nil {
 		return dto.GetWavesAndStellarFeeResponse{}, apiErr, nil
 	}
 	maxAmount := balance.Balance - 300000
 	isEnough := true
-	if stringAmountToSatoshi(amount) > maxAmount {
+	if stringAmountToSatoshi(params.Amount) > maxAmount {
 		isEnough = false
 		if maxAmount < 0 {
 			maxAmount = 0
@@ -250,12 +262,12 @@ func GetWavesFee(address string, amount string) (dto.GetWavesAndStellarFeeRespon
 	}}, responses.ResponseError{}, nil
 }
 
-func GetStellarFee(address string, amount string) (dto.GetWavesAndStellarFeeResponse, responses.ResponseError, error) {
-	balance, apiErr := api.GetStellarBalance(address)
+func GetStellarFee(params *Params) (dto.GetWavesAndStellarFeeResponse, responses.ResponseError, error) {
+	balance, apiErr := api.GetStellarBalance(params.Address)
 	if apiErr.Error != nil || apiErr.ApiError != nil {
 		return dto.GetWavesAndStellarFeeResponse{}, apiErr, nil
 	}
-	fr := CalcStellarFee(balance.Balance, amount, 100)
+	fr := CalcStellarFee(balance.Balance, params.Amount, 100)
 	return fr, responses.ResponseError{}, nil
 }
 
@@ -294,4 +306,65 @@ func calcLitecoinFee(inputCount, outputCount, feePerByte int) int {
 
 func calcBitcoinCashFee(inputCount, outputCount, feePerByte int) int {
 	return (inputCount*148 + outputCount*34 + 10) * feePerByte
+}
+
+func speedControl(t interface{}, speed string) (*feeCalculator, int) {
+	var (
+		f        feeCalculator
+		gasPrice int
+	)
+
+	switch t.(type) {
+	case responses.BitcoinFeeResponse:
+		typed := t.(responses.BitcoinFeeResponse)
+		f.CalcFee = calcBitcoinFee
+		switch speed {
+		case "slow":
+			f.FeePerByte = typed.HourFee
+		case "average":
+			f.FeePerByte = typed.HalfHourFee
+		case "fast":
+			f.FeePerByte = typed.FastestFee
+		default:
+			f.FeePerByte = typed.HourFee
+		}
+		if f.FeePerByte <= 10 {
+			f.MinFeePerByte = f.FeePerByte - 1
+		} else {
+			f.MinFeePerByte = 10
+		}
+	case responses.LitecoinFeeResponse:
+		typed := t.(responses.LitecoinFeeResponse)
+		f.CalcFee = calcLitecoinFee
+		switch speed {
+		case "slow":
+			f.FeePerByte = typed.LowFeePerKb
+		case "average":
+			f.FeePerByte = typed.MediumFeePerKb
+		case "fast":
+			f.FeePerByte = typed.HighFeePerKb
+		default:
+			f.FeePerByte = typed.MediumFeePerKb
+		}
+		f.FeePerByte = f.FeePerByte / 1024
+		if f.FeePerByte <= 8 {
+			f.MinFeePerByte = f.FeePerByte - 1
+		} else {
+			f.MinFeePerByte = 8
+		}
+	case responses.EthereumFeeResponse:
+		typed := t.(responses.EthereumFeeResponse)
+		switch speed {
+		case "slow":
+			gasPrice = typed.GasPrice * 10 / 8
+		case "average":
+			gasPrice = typed.GasPrice
+		case "fast":
+			gasPrice = typed.GasPrice + (typed.GasPrice * 10 / 5)
+		default:
+			gasPrice = typed.GasPrice
+		}
+	}
+
+	return &f, gasPrice
 }
